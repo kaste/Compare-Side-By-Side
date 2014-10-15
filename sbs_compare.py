@@ -89,6 +89,10 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		window.run_command( 'erase_view' )
 		window.run_command( 'insert_view', { 'string': '\n'.join( bufferB ) } )
 		self.highlight_lines( view2, highlightB, 'B' )
+		
+		if self.settings().get( 'line_count_popup', False ):
+			numDiffs = len( highlightA ) + len( highlightB )
+			sublime.message_dialog( str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
 
 		
 	def run( self, edit ):
