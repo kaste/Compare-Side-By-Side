@@ -36,12 +36,8 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			colour = self.settings().get( 'add_colour', 'string' )
 
 		# fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
-		print( sublime.version() )
-		if int( sublime.version() ) < 3000:
-			print( "ST2" )
-			drawType = sublime.DRAW_OUTLINED
-		else:
-			print( "ST3" )
+		drawType = sublime.DRAW_OUTLINED
+		if int( sublime.version() ) >= 3000:
 			drawType = sublime.DRAW_NO_OUTLINE
 			if self.settings().get( 'outlines_only', False ):
 				drawType = sublime.DRAW_OUTLINE
