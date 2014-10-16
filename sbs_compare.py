@@ -38,9 +38,8 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		# fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
 		drawType = sublime.DRAW_OUTLINED
 		if int( sublime.version() ) >= 3000:
-			drawType = sublime.DRAW_NO_OUTLINE
-			if self.settings().get( 'outlines_only', False ):
-				drawType = sublime.DRAW_OUTLINE
+			if not self.settings().get( 'outlines_only', False ):
+				drawType = sublime.DRAW_NO_OUTLINE
 			
 		view.add_regions( 'diff_highlighted', regionList, colour, '', drawType )
 				
