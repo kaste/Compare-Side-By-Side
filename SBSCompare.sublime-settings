@@ -20,8 +20,10 @@
 	"add_colour": "string",
 	
 	// only draw outlines (no background colour filling)
+	// note: fill highlighting (false) only works on ST3
+	// ST2 will always use outlines only
 	"outlines_only": false,
 	
 	// show a popup after comparison counting # of lines added/removed/total
-	"line_count_popup": true,
+	"line_count_popup": true
 }

@@ -2,6 +2,7 @@
 	"id": "preferences",
 	"children":
 	[{
+		"caption": "Package Settings",
 		"id": "package-settings",
 		"children":
 		[{
