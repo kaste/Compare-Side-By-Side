@@ -9,6 +9,7 @@ Features
   - Easily select two open tabs to compare
   - Comparison results open in a new window
   - Empty lines added so common code lines up
+  - Count number of lines changed
   - Highlighting of changed lines
   - Synchronized scrolling
 
@@ -26,6 +27,6 @@ Usage Options
   
 Configuration
 ---
-Highlight colours and other options can be configured in SBSCompare.sublime-settings
-
-Default colours are optimized for the base16 colour scheme
+  - Highlight colours and other options can be configured in SBSCompare.sublime-settings
+  - To access: *Preferences -> Package Settings -> Compare Side-By-Side*
+  - Default colours are optimized for the base16 colour scheme
