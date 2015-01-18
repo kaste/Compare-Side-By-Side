@@ -189,7 +189,6 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				else:
 					menu_items.append( os.path.basename( fileName ) )	
 			sublime.set_timeout( self.view.window().show_quick_panel( menu_items, on_click ) )
-		
 
 
 class ViewScrollSyncer( object ):
@@ -200,6 +199,12 @@ class ViewScrollSyncer( object ):
 		self.timeout_unfocused = 50
 		
 		self.run()
+		
+	def update_scroll( self, view1, view2, lastUpdated ):
+		if lastUpdated == 'A':
+			view2.set_viewport_position( view1.viewport_position(), False )
+		elif lastUpdated == 'B':
+			view1.set_viewport_position( view2.viewport_position(), False )
 		
 	def run( self ):
 		if not self.window:
@@ -214,26 +219,41 @@ class ViewScrollSyncer( object ):
 		
 		if not view1 or not view2:
 			return
+		
+		vecA = view1.viewport_position()
+		vecB = view2.viewport_position()
+		
+		if vecA != vecB:
+			lastVecA0 = view1.settings().get( 'viewsync_last_vec0', 1 )
+			lastVecA1 = view1.settings().get( 'viewsync_last_vec1', 1 )
 			
-		rowA, _ = view1.rowcol( view1.visible_region().begin() )
-		rowB, _ = view2.rowcol( view2.visible_region().begin() )
-		
-		
-		if rowA != rowB:
-			lastRowA = view1.settings().get( 'viewsync_last_row', 1 )
-			lastRowB = view2.settings().get( 'viewsync_last_row', 1 )
+			lastVecB0 = view2.settings().get( 'viewsync_last_vec0', 1 )
+			lastVecB1 = view2.settings().get( 'viewsync_last_vec1', 1 )
+			
+			lastVecA = ( lastVecA0, lastVecA1 )
+			lastVecB = ( lastVecB0, lastVecB1 )
 			
 			lastUpdated = ''
-			if lastRowA != rowA:
-				lastUpdated = 'A'
-				view1.settings().set( 'viewsync_last_row', rowA )
-			elif lastRowB != rowB:
-				lastUpdated = 'B'
-				view2.settings().set( 'viewsync_last_row', rowB )
 			
-			if lastUpdated == 'A':
-				view2.set_viewport_position( view1.viewport_position(), False )
-			elif lastUpdated == 'B':
-				view1.set_viewport_position( view2.viewport_position(), False )
+			if lastVecA != vecA:				
+				lastUpdated = 'A'
+				
+				view1.settings().set( 'viewsync_last_vec0', vecA[0] )
+				view1.settings().set( 'viewsync_last_vec1', vecA[1] )
+				
+				view2.settings().set( 'viewsync_last_vec0', vecA[0] )
+				view2.settings().set( 'viewsync_last_vec1', vecA[1] )				
+				
+			if lastVecB != vecB:				
+				lastUpdated = 'B'
+				
+				view1.settings().set( 'viewsync_last_vec0', vecB[0] )
+				view1.settings().set( 'viewsync_last_vec1', vecB[1] )
+				
+				view2.settings().set( 'viewsync_last_vec0', vecB[0] )
+				view2.settings().set( 'viewsync_last_vec1', vecB[1] )
+				
+			if ( lastUpdated != '' ):
+				self.update_scroll( view1, view2, lastUpdated )
 		
 		sublime.set_timeout( self.run, self.timeout_focused )
