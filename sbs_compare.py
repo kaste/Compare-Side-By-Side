@@ -97,7 +97,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			sublime.message_dialog( str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
 
 		
-	def run( self, edit ):
+	def run( self, edit, with_active = False, group = -1, index = -1 ):		
 		active_view = self.view
 		active_window = active_view.window()
 		active_id = active_view.id()
@@ -181,14 +181,22 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		if len( openTabs ) == 1:
 			on_click( 0 )
 		else:
-			menu_items = []
-			for tab in openTabs:
-				fileName = tab[0]
-				if self.settings().get( 'expanded_filenames', False ):
-					menu_items.append( [ os.path.basename( fileName ), fileName ] )
-				else:
-					menu_items.append( os.path.basename( fileName ) )	
-			sublime.set_timeout( self.view.window().show_quick_panel( menu_items, on_click ) )
+			if with_active == True:
+				active_group, active_group_index = active_window.get_view_index( active_view )
+				
+				if index > active_group_index:
+					index -= 1
+					
+				on_click( index )	
+			else:
+				menu_items = []
+				for tab in openTabs:
+					fileName = tab[0]
+					if self.settings().get( 'expanded_filenames', False ):
+						menu_items.append( [ os.path.basename( fileName ), fileName ] )
+					else:
+						menu_items.append( os.path.basename( fileName ) )	
+				sublime.set_timeout( self.view.window().show_quick_panel( menu_items, on_click ) )
 
 
 class ViewScrollSyncer( object ):

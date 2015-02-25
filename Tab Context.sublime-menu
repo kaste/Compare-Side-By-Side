@@ -1,4 +1,5 @@
 [
    { "caption": "-" },
-   { "caption": "Compare with...", "command": "sbs_compare" }
+   { "caption": "Compare with...", "command": "sbs_compare" },
+   { "caption": "Compare with active tab", "command": "sbs_compare", "args": { "with_active": true, "group": -1, "index": -1 } }
 ]
