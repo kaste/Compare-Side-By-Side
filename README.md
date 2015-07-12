@@ -16,7 +16,8 @@ Features
 Installation Options
 ---
   - Search for and install using [Package Control](https://sublime.wbond.net/installation) (ctrl+shift+P, "Install Package")
-  - Clone or extract this repo to a new folder in your Sublime 'Packages' folder (*Preferences -> Browse Packages*)
+  - Clone or extract this repo to a new folder in your Sublime 'Packages' folder  
+    (*Preferences -> Browse Packages*)
 
 Usage Options
 ---
