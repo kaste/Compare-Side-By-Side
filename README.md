@@ -21,9 +21,11 @@ Installation Options
 Usage Options
 ---
   - Right click on a tab and select "Compare with..."
-  - Right click somewhere in the code and "Compare with..."
-  - Right click on a file in the side bar and "Compare with..."
-  - Begin typing "Compare with..." in the command pallete (ctrl+shift+P)
+  - Right click somewhere in the active view and select "Compare with..."
+  - Right click on a tab and select "Compare with active tab"
+  - Highlight text, right click -> "Mark selection for comparison"
+   - Mark a second selection, then right click -> "Compare selections"
+  - Create two selections by holding CTRL, then "Compare selections"
   
 Configuration
 ---
