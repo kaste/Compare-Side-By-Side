@@ -19,6 +19,16 @@
 	// syntax colour name to use for code added in column B
 	"add_colour": "string",
 	
+	// syntax colour name to use for intraline diffs
+	"modified_colour": "support.class",
+	
+	// enable or disable intraline diffing
+	"enable_intraline": true,
+	
+	// highlight intraline empty space where characters are missing
+	// useful, but can get a rather chaotic looking
+	"intraline_emptyspace": false,
+	
 	// only draw outlines (no background colour filling)
 	// note: fill highlighting (false) only works on ST3
 	// ST2 will always use outlines only

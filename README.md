@@ -11,6 +11,7 @@ Features
   - Empty lines added so common code lines up
   - Count number of lines changed
   - Highlighting of changed lines
+  - Intra-line diff highlights
   - Synchronized scrolling
 
 Installation Options

@@ -37,11 +37,31 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		content = view.substr( selection )
 		return content
 		
-	def highlight_lines( self, view, lines, col ):
+	def get_drawtype( self ):
+		# fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
+		drawType = sublime.DRAW_OUTLINED
+		if int( sublime.version() ) >= 3000:
+			if not self.settings().get( 'outlines_only', False ):
+				drawType = sublime.DRAW_NO_OUTLINE
+		return drawType
+		
+	def highlight_lines( self, view, lines, sublines, col ):
+		# full line diffs
 		regionList = []
-		for num in lines:
-			point = view.text_point( num, 0 )
-			regionList.append( view.line( point ) )
+		for lineNum in lines:
+			lineStart = view.text_point( lineNum, 0 )
+			for sub in (sub for sub in sublines if sub[0] == lineNum):
+				subStart = view.text_point( lineNum, sub[1] )
+				subEnd = view.text_point( lineNum, sub[2] )
+				
+				region = sublime.Region( lineStart, subStart )
+				regionList.append( region )
+				
+				lineStart = subEnd
+				
+			lineEnd = view.text_point( lineNum+1, -1 )
+			region = sublime.Region( lineStart, lineEnd )
+			regionList.append( region )
 			
 		colour = 'keyword'
 		if col == 'A':
@@ -49,13 +69,24 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		elif col == 'B':
 			colour = self.settings().get( 'add_colour', 'string' )
 
-		# fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
-		drawType = sublime.DRAW_OUTLINED
-		if int( sublime.version() ) >= 3000:
-			if not self.settings().get( 'outlines_only', False ):
-				drawType = sublime.DRAW_NO_OUTLINE
+		drawType = self.get_drawtype()			
+		view.add_regions( 'diff_highlighted-' + col, regionList, colour, '', drawType )
+		
+	def sub_highlight_lines( self, view, lines, col ):
+		# intra-line diffs
+		regionList = []
+		for diff in lines:
+			lineNum = diff[0]
+			start = view.text_point( lineNum, diff[1] )
+			end = view.text_point( lineNum, diff[2] )
 			
-		view.add_regions( 'diff_highlighted', regionList, colour, '', drawType )
+			region = sublime.Region( start, end )
+			regionList.append( region )
+		
+		colour = self.settings().get( 'modified_colour', 'support.class' )
+			
+		drawType = self.get_drawtype()			
+		view.add_regions( 'diff_intraline-' + col, regionList, colour, '', drawType )
 				
 		
 	def compare_views( self, view1, view2 ):
@@ -71,11 +102,19 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		highlightA = []
 		highlightB = []
 		
-		diff = difflib.ndiff( linesA, linesB )	
+		subHighlightA = []
+		subHighlightB = []
+		
+		diff = difflib.ndiff( linesA, linesB, charjunk = None )	
+		
+		lastB = False
+		intraLineA = ''
+		intraLineB = ''
 			
 		lineNum = 0
 		for line in diff:
 			lineNum += 1
+			
 			code = line[:2]
 			text = line[2:]
 			
@@ -83,13 +122,37 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				bufferA.append( text )
 				bufferB.append( '' )
 				highlightA.append( lineNum - 1 )
+				intraLineA = text
+				lastB = False
 			elif code == '+ ':
 				bufferA.append( '' )
 				bufferB.append( text )
 				highlightB.append( lineNum - 1 )
+				intraLineB = text
+				lastB = True
 			elif code == '  ':
 				bufferA.append( text )
 				bufferB.append( text )
+				lastB = False
+			elif code == '? ' and lastB == True:
+				lineNum -= 1
+				
+				if self.settings().get( 'enable_intraline', True ):
+					s = difflib.SequenceMatcher( None, intraLineA, intraLineB )
+					for tag, i1, i2, j1, j2 in s.get_opcodes():
+						if tag != 'equal': # == replace
+							lnA = lineNum-2
+							lnB = lineNum-1
+							
+							if self.settings().get( 'full_intraline_highlights', False ):
+								if tag == 'insert':
+									i2 += j2 - j1
+								if tag == 'delete':
+									j2 += i2 - i1
+							
+							subHighlightA.append( [ lnA, i1, i2 ] )
+							subHighlightB.append( [ lnB, j1, j2 ] )
+				lastB = False
 			else:
 				lineNum -= 1
 									
@@ -99,16 +162,25 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		window.focus_view( view1 )
 		window.run_command( 'erase_view' )
 		window.run_command( 'insert_view', { 'string': '\n'.join( bufferA ) } )
-		self.highlight_lines( view1, highlightA, 'A' )
 		
 		window.focus_view( view2 )
 		window.run_command( 'erase_view' )
 		window.run_command( 'insert_view', { 'string': '\n'.join( bufferB ) } )
-		self.highlight_lines( view2, highlightB, 'B' )
+		
+		self.highlight_lines( view1, highlightA, subHighlightA, 'A' )			
+		self.highlight_lines( view2, highlightB, subHighlightB, 'B' )
+		
+		intraDiff = ''
+		if self.settings().get( 'enable_intraline', True ):
+			self.sub_highlight_lines( view1, subHighlightA, 'A' )
+			self.sub_highlight_lines( view2, subHighlightB, 'B' )
+			
+			numIntra = len( subHighlightA ) + len( subHighlightB )
+			intraDiff =  str( numIntra ) + ' intra-line modifications\n'
 		
 		if self.settings().get( 'line_count_popup', False ):
 			numDiffs = len( highlightA ) + len( highlightB )
-			sublime.message_dialog( str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
+			sublime.message_dialog( intraDiff + str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
 
 		
 	def run( self, edit, with_active = False, group = -1, index = -1, compare_selections = False ):		
