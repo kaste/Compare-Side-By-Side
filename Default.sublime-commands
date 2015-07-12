@@ -2,5 +2,14 @@
     {
         "caption": "Compare with...",
         "command": "sbs_compare"
+    },
+    {
+        "caption": "Mark selection for comparison",
+        "command": "sbs_mark_sel"
+    },
+    {
+        "caption": "Compare selections",
+        "command": "sbs_compare",
+        "args": { "compare_selections": true }
     }
 ]

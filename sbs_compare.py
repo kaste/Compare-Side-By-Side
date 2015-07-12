@@ -13,8 +13,22 @@ class InsertViewCommand( sublime_plugin.TextCommand ):
 	def run( self, edit, string='' ):
 		self.view.insert( edit, self.view.size(), string )
 		
+sbs_markedSelection = [ '', '' ]
+class SbsMarkSelCommand( sublime_plugin.TextCommand ):
+	def run( self, edit, string='' ):
+		global sbs_markedSelection
+		
+		window = sublime.active_window()
+		view = window.active_view()
+		sel = view.sel()
 
-class SbsCompareCommand( sublime_plugin.TextCommand ):
+		region = sel[0]
+		selectionText = view.substr( region )
+		
+		sbs_markedSelection[0] = sbs_markedSelection[1]
+		sbs_markedSelection[1] = selectionText
+
+class SbsCompareCommand( sublime_plugin.TextCommand ):	
 	def settings( self ):
 		return sublime.load_settings( 'SBSCompare.sublime-settings' )
 		
@@ -97,7 +111,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			sublime.message_dialog( str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
 
 		
-	def run( self, edit, with_active = False, group = -1, index = -1 ):		
+	def run( self, edit, with_active = False, group = -1, index = -1, compare_selections = False ):		
+		global sbs_markedSelection
+		
 		active_view = self.view
 		active_window = active_view.window()
 		active_id = active_view.id()
@@ -113,72 +129,95 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 					viewName = view.name()
 				openTabs.append( [ viewName, view ] )
 
+		def create_comparison( view1_contents, view2_contents, syntax, name1_override = False, name2_override = False ):
+			view1_syntax = syntax
+			view2_syntax = syntax
+			
+			# make new window
+			active_window.run_command( 'new_window' )		
+			new_window = sublime.active_window()
+			new_window.set_layout( { "cols": [0.0, 0.5, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1], [1, 0, 2, 1]] } )
+			
+			if self.settings().get( 'toggle_sidebar', False ):
+				new_window.run_command( 'toggle_side_bar' )
+			if self.settings().get( 'toggle_menu', False ):
+				new_window.run_command( 'toggle_menu' )
+			
+			# view 1
+			new_window.run_command( 'new_file' )
+			new_window.run_command( 'insert_view', { 'string': view1_contents } )
+			new_window.active_view().set_syntax_file( view1_syntax )
+			
+			view1_name = 'untitled'
+			if active_view.file_name():
+				view1_name = active_view.file_name()
+			elif active_view.name():
+				view1_name = active_view.name()
+			if name1_override != False:
+				view1_name = name1_override
+			new_window.active_view().set_name( os.path.basename( view1_name ) + ' (active)' )
+				
+			new_window.active_view().set_scratch( True )	
+			view1 = new_window.active_view()
+			
+			# view 2
+			new_window.run_command( 'new_file' )
+			new_window.run_command( 'insert_view', { 'string': view2_contents } )
+			new_window.active_view().set_syntax_file( view2_syntax )
+			new_window.active_view().set_name( os.path.basename( name2_override ) + ' (other)' )
+			
+			# move view 2 to group 2
+			new_window.set_view_index( new_window.active_view(), 1, 0 )
+			
+			new_window.active_view().set_scratch( True )
+			view2 = new_window.active_view()
+			
+			# run diff
+			self.compare_views( view1, view2 )
+			
+			# make readonly
+			new_window.focus_view( view1 )
+			if self.settings().get( 'read_only', False ):
+				new_window.active_view().set_read_only( True )
+				
+			new_window.focus_view( view2 )
+			if self.settings().get( 'read_only', False ):
+				new_window.active_view().set_read_only( True )
+			
+			# activate scroll syncer				
+			ViewScrollSyncer( new_window, [ view1, view2 ] )
+			
+			# move views to top left
+			view1.set_viewport_position( (0, 0), False )
+			view2.set_viewport_position( (0, 0), False )
+
 		def on_click( index ):
 			if index > -1:
 				# get original views' data
 				view1_contents = self.get_view_contents( active_view )
 				view2_contents = self.get_view_contents( openTabs[index][1] )
 				
-				view1_syntax = active_view.settings().get( 'syntax' )
-				view2_syntax = active_view.settings().get( 'syntax' )
+				syntax = active_view.settings().get( 'syntax' )
 				
-				# make new window
-				active_window.run_command( 'new_window' )		
-				new_window = sublime.active_window()
-				new_window.set_layout( { "cols": [0.0, 0.5, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1], [1, 0, 2, 1]] } )
-				
-				if self.settings().get( 'toggle_sidebar', False ):
-					new_window.run_command( 'toggle_side_bar' )
-				if self.settings().get( 'toggle_menu', False ):
-					new_window.run_command( 'toggle_menu' )
-				
-				# view 1
-				new_window.run_command( 'new_file' )
-				new_window.run_command( 'insert_view', { 'string': view1_contents } )
-				new_window.active_view().set_syntax_file( view1_syntax )
-				
-				view1_name = 'untitled'
-				if active_view.file_name():
-					view1_name = active_view.file_name()
-				elif active_view.name():
-					view1_name = active_view.name()
-				new_window.active_view().set_name( os.path.basename( view1_name ) + ' (active)' )
-					
-				new_window.active_view().set_scratch( True )	
-				view1 = new_window.active_view()
-				
-				# view 2
-				new_window.run_command( 'new_file' )
-				new_window.run_command( 'insert_view', { 'string': view2_contents } )
-				new_window.active_view().set_syntax_file( view2_syntax )
-				new_window.active_view().set_name( os.path.basename( openTabs[index][0] ) + ' (other)' )
-				
-				# move view 2 to group 2
-				new_window.set_view_index( new_window.active_view(), 1, 0 )
-				
-				new_window.active_view().set_scratch( True )
-				view2 = new_window.active_view()
-				
-				# run diff
-				self.compare_views( view1, view2 )
-				
-				# make readonly
-				new_window.focus_view( view1 )
-				if self.settings().get( 'read_only', False ):
-					new_window.active_view().set_read_only( True )
-					
-				new_window.focus_view( view2 )
-				if self.settings().get( 'read_only', False ):
-					new_window.active_view().set_read_only( True )
-				
-				# activate scroll syncer				
-				ViewScrollSyncer( new_window, [ view1, view2 ] )
-				
-				# move views to top left
-				view1.set_viewport_position( (0, 0), False )
-				view2.set_viewport_position( (0, 0), False )
+				create_comparison( view1_contents, view2_contents, syntax, False, openTabs[index][0] )
 
-		if len( openTabs ) == 1:
+		if compare_selections == True:
+			selA = sbs_markedSelection[0]
+			selB = sbs_markedSelection[1]
+			
+			sel = active_view.sel()
+			
+			selNum = 0
+			for selection in sel:
+				selNum += 1
+			
+			if selNum == 2:
+				selA = active_view.substr( sel[0] )
+				selB = active_view.substr( sel[1] )
+			
+			syntax = active_view.settings().get( 'syntax' )
+			create_comparison( selA, selB, syntax, 'selection A', 'selection B' )
+		elif len( openTabs ) == 1:
 			on_click( 0 )
 		else:
 			if with_active == True:
