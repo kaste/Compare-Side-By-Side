@@ -6,12 +6,12 @@ This package adds a simple side-by-side comparison tool to Sublime Text 2 and 3.
 
 Features
 ---
-  - Easily select two open tabs to compare
+  - Easily select two tabs or selections to compare
   - Comparison results open in a new window
   - Empty lines added so common code lines up
   - Count number of lines changed
   - Highlighting of changed lines
-  - Intra-line diff highlights
+  - Intra-line diff highlighting
   - Synchronized scrolling
 
 Installation Options
