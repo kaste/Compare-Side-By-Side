@@ -14,8 +14,9 @@ class InsertViewCommand( sublime_plugin.TextCommand ):
 		self.view.insert( edit, self.view.size(), string )
 		
 sbs_markedSelection = [ '', '' ]
+sbs_files = []
 class SbsMarkSelCommand( sublime_plugin.TextCommand ):
-	def run( self, edit, string='' ):
+	def run( self, edit ):
 		global sbs_markedSelection
 		
 		window = sublime.active_window()
@@ -27,6 +28,29 @@ class SbsMarkSelCommand( sublime_plugin.TextCommand ):
 		
 		sbs_markedSelection[0] = sbs_markedSelection[1]
 		sbs_markedSelection[1] = selectionText
+		
+class SbsCompareFilesCommand( sublime_plugin.ApplicationCommand ):
+	def run( self, A=None, B=None ):
+		global sbs_files
+		
+		if A == None or B == None:
+			print( 'Compare Error: file(s) not specified' )
+			return
+			
+		A = os.path.abspath( A )
+		B = os.path.abspath( B )
+		if not os.path.isfile( A ) or not os.path.isfile( B ):
+			print( 'Compare Error: file(s) not found' )
+			return
+			
+		del sbs_files[:]
+		sbs_files.append( A )
+		sbs_files.append( B )
+		
+		print( 'Comparing "%s" and "%s"' % ( A, B ) )
+		
+		window = sublime.active_window()
+		window.run_command( 'sbs_compare' )
 
 class SbsCompareCommand( sublime_plugin.TextCommand ):	
 	def settings( self ):
@@ -36,6 +60,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		selection = sublime.Region( 0, view.size() )
 		content = view.substr( selection )
 		return content
+		
+	def close_view( self, view ):
+		parent = view.window()
+		parent.focus_view( view )
+		parent.run_command( "close_file" )
 		
 	def get_drawtype( self ):
 		# fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
@@ -184,7 +213,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 
 		
 	def run( self, edit, with_active = False, group = -1, index = -1, compare_selections = False ):		
-		global sbs_markedSelection
+		global sbs_markedSelection, sbs_files
 		
 		active_view = self.view
 		active_window = active_view.window()
@@ -272,8 +301,30 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				syntax = active_view.settings().get( 'syntax' )
 				
 				create_comparison( view1_contents, view2_contents, syntax, False, openTabs[index][0] )
+				
+		def compare_from_views( view1, view2 ):
+			if view1.is_loading() or view2.is_loading():
+				sublime.set_timeout( lambda: compare_from_views( view1, view2 ), 10 )
+			else:				
+				view1_contents = self.get_view_contents( view1 )
+				view2_contents = self.get_view_contents( view2 )
+				syntax = view1.settings().get( 'syntax' )
+				
+				self.close_view( view1 )
+				self.close_view( view2 )
+				
+				create_comparison( view1_contents, view2_contents, syntax, file1, file2 )
 
-		if compare_selections == True:
+		if len( sbs_files ) > 0:
+			file1 = sbs_files[0]
+			file2 = sbs_files[1]
+			
+			view1 = active_window.open_file( file1 )
+			view2 = active_window.open_file( file2 )
+			
+			compare_from_views( view1, view2 )			
+			del sbs_files[:]
+		elif compare_selections == True:
 			selA = sbs_markedSelection[0]
 			selB = sbs_markedSelection[1]
 			
