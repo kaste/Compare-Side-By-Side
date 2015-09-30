@@ -28,9 +28,7 @@ Usage Options
   - Highlight text, right click -> "Mark selection for comparison"
    - Mark a second selection, then right click -> "Compare selections"
   - Create two selections by holding CTRL, then "Compare selections"
-  - From the command line:
-   - Windows:   ```subl --command "sbs_compare_files {\"A\":\"file1\", \"B\":\"file2\"}"```
-   - Linux/OSX: ```subl --command 'sbs_compare_files {"A":"file1", "B":"file2"}'```
+  - From the command line ([see README_COMMANDS.md](README_COMMANDS.md))
   
 Configuration
 ---
