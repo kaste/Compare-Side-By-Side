@@ -13,14 +13,27 @@
 	// turn this on if you usually have the menu hidden in your main window
 	"toggle_menu": true,
 	
-	// syntax colour name to use for code removed from column A
-	"remove_colour": "invalid.illegal",
 	
-	// syntax colour name to use for code added in column B
-	"add_colour": "string",
+	// COLOURS
+	// in ST3 these can be hex!
+	// in ST2 these can only be syntax colour names
+	//   internal defaults:
+	//      removed:  invalid.illegal
+	//      added:    string
+	//      modified: support.class
 	
-	// syntax colour name to use for intraline diffs
-	"modified_colour": "support.class",
+	// code removed from column A
+	"remove_colour": "#bf616a",
+	
+	// code added in column B
+	"add_colour": "#a3be8c",
+	
+	// intraline diffs
+	"modified_colour": "#7fa3c7",
+	
+	// text colour (ST3)
+	"text_colour": "#2b303b",
+	
 	
 	// enable or disable intraline diffing
 	"enable_intraline": true,

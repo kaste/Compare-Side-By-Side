@@ -70,6 +70,78 @@ class SbsLayoutPreserver( sublime_plugin.EventListener ):
 					sublime.set_timeout( lambda: win.show_quick_panel( [ 'Please close all comparison windows first' ], None ), 10 )
 					
 			sublime.set_timeout( after_close, 100 )
+			
+			
+def generate_colour_scheme( view, generate=True ):
+	# make sure we have hex AND we're >= ST3 (load_resource doesn't work in ST2)	
+	colour_removed = sbs_settings().get( 'remove_colour', 'invalid.illegal' )
+	colour_added = sbs_settings().get( 'add_colour', 'string' )
+	colour_modified = sbs_settings().get( 'modified_colour', 'support.class' )
+	colour_text = sbs_settings().get( 'text_colour', '' )
+	
+	notHex = False
+	for col in [ colour_removed, colour_added, colour_modified ]:
+		if not '#' in col:
+			notHex = True
+	
+	if int( sublime.version() ) < 3000 or notHex:
+		return { 'removed': colour_removed, 'added': colour_added, 'modified': colour_modified }
+	
+	
+	# generate theme strings
+	colourStrings = {}
+	colourHexes = {}
+	for col in [ [ 'removed', colour_removed ], [ 'added', colour_added ], [ 'modified', colour_modified ] ]:
+		colourStrings[ col[0] ] = 'comparison.' + col[0]
+		colourHexes[ col[0] ] = col[1]
+	
+	# relative for settings, absolute for writing to file
+	# forwardSlashesOnly brought to you by Windows
+	def theme_file( abs, folderOnly=False, forwardSlashesOnly=False ):
+		package_dir = os.path.basename( sublime.packages_path() )
+		if abs:
+			package_dir = sublime.packages_path()
+			
+		folder = os.path.join( package_dir, 'User' )
+		if forwardSlashesOnly:
+			folder = folder.replace( '\\', '/' )
+		if folderOnly:
+			return folder
+			
+		file = os.path.join( folder, 'SBSCompare.tmTheme' )
+		if forwardSlashesOnly:
+			file = file.replace( '\\', '/' )
+		return file
+	
+	# generate modified theme
+	if generate:		
+		# loop through colours and generate their xml
+		xml = ''
+		xml_tmpl = '<dict><key>name</key><string>{}</string><key>scope</key><string>{}</string><key>settings</key><dict><key>background</key><string>{}</string><key>foreground</key><string>{}</string></dict></dict>'
+		
+		for name in colourStrings:
+			string = colourStrings[name]
+			chex = colourHexes[name]
+			xml += xml_tmpl.format( 'Comparison ' + name, string, chex, colour_text )
+			
+		# get current scheme xml
+		current_scheme = view.settings().get( 'color_scheme' )  # no 'u' >:(
+		scheme = sublime.load_resource( current_scheme )
+		
+		# combiiiiiiiiiiiiine
+		dropzone = scheme.rfind( '</array>' )
+		data = scheme[:dropzone] + xml + scheme[dropzone:]
+		
+		if not os.path.exists( theme_file( abs=True, folderOnly=True ) ):
+			os.makedirs( theme_file( abs=True, folderOnly=True ) )
+		
+		# save new theme
+		with open( theme_file( abs=True ), 'w' ) as f:
+			f.write( data )
+	
+	# set view to use new theme
+	view.settings().set( 'color_scheme', theme_file( abs=False, forwardSlashesOnly=True ) )
+	return colourStrings
 
 
 sbs_markedSelection = [ '', '' ]
@@ -153,9 +225,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			
 		colour = 'keyword'
 		if col == 'A':
-			colour = sbs_settings().get( 'remove_colour', 'invalid.illegal' )
+			colour = self.colours['removed']
 		elif col == 'B':
-			colour = sbs_settings().get( 'add_colour', 'string' )
+			colour = self.colours['added']
 
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_highlighted-' + col, regionList, colour, '', drawType )
@@ -172,7 +244,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			region = sublime.Region( start, end )
 			regionList.append( region )
 		
-		colour = sbs_settings().get( 'modified_colour', 'support.class' )
+		colour = colour = self.colours['modified']
 			
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_intraline-' + col, regionList, colour, '', drawType )
@@ -344,6 +416,10 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			view1.settings().set( "is_sbs_compare", True )
 			view2.settings().set( "is_sbs_compare", True )
 			
+			# generate and set colour scheme
+			self.colours = generate_colour_scheme( view1 )
+			generate_colour_scheme( view2, generate=False )
+			
 			# run diff
 			self.compare_views( view1, view2 )
 			
@@ -498,6 +574,7 @@ class ViewScrollSyncer( object ):
 				self.update_scroll( view1, view2, lastUpdated )
 		
 		sublime.set_timeout( self.run, self.timeout_focused )
+
 					
 def sbs_scroll_to( view, prev=False ):
 	first_find = False
