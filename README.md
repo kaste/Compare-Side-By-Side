@@ -28,10 +28,12 @@ Usage Options
   - Highlight text, right click -> "Mark selection for comparison"
    - Mark a second selection, then right click -> "Compare selections"
   - Create two selections by holding CTRL, then "Compare selections"
-  - From the command line ([see README_COMMANDS.md](README_COMMANDS.md))
+  - From the command line: [see README_COMMANDS.md](README_COMMANDS.md)
+  - Jump to next: `Alt+Shift+Down`, Jump to previous: `Alt+Shift+Up`
   
 Configuration
 ---
   - Highlight colours and other options can be configured in SBSCompare.sublime-settings
+  - Hotkeys can be changed in the included `Default (PLATFORM).sublime-keys` files
   - To access: *Preferences -> Package Settings -> Compare Side-By-Side*
   - Default colours are optimized for the base16 colour scheme in ST3
