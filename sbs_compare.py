@@ -133,8 +133,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 	def highlight_lines( self, view, lines, sublines, col ):
 		# full line diffs
 		regionList = []
+		markers = []
 		for lineNum in lines:
 			lineStart = view.text_point( lineNum, 0 )
+			markers.append( lineStart )
+			
 			for sub in (sub for sub in sublines if sub[0] == lineNum):
 				subStart = view.text_point( lineNum, sub[1] )
 				subEnd = view.text_point( lineNum, sub[2] )
@@ -156,6 +159,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_highlighted-' + col, regionList, colour, '', drawType )
+		view.settings().set( 'sbs_markers', markers )
 		
 	def sub_highlight_lines( self, view, lines, col ):
 		# intra-line diffs
@@ -487,3 +491,56 @@ class ViewScrollSyncer( object ):
 				self.update_scroll( view1, view2, lastUpdated )
 		
 		sublime.set_timeout( self.run, self.timeout_focused )
+					
+def sbs_scroll_to( view, prev=False ):
+	first_find = False
+	center_offset = view.settings().get( 'sbs_centeroffset' )
+	if center_offset is None:
+		center_offset = 0
+		first_find = True
+	
+	view_pos = view.viewport_position()
+	current_line = view.rowcol( view_pos[1] + center_offset )[0]
+	for col in [ 'A', 'B' ]:
+		regions = view.settings().get( 'sbs_markers' )
+		if prev:
+			regions.reverse()
+		
+		for highlight in regions:
+			pos = view.text_to_layout( highlight )
+			diff_line = view.rowcol( pos[1] )[0]
+			# rowcol to ensure we're only ever dealing with absolute line numbers
+			
+			found = False
+			if prev:
+				if diff_line < current_line:
+					found = True
+			else:
+				if diff_line > current_line:
+					found = True
+					
+			# always allow the first find so we can calculate the center offset
+			if found or ( not prev and first_find ):
+				view.show_at_center( highlight )
+				
+				# the first find needs to be repeated to "trick" ViewScrollSyncer
+				if first_find:
+					sublime.set_timeout( lambda: view.show_at_center( highlight ), 10 )
+				
+				# store new viewport center offset
+				if view.settings().get( 'sbs_centeroffset' ) == None:
+					center_offset = pos[1] - view.viewport_position()[1]
+					view.settings().set( 'sbs_centeroffset', center_offset )
+				return
+				
+	msg = 'Reached the '
+	msg += 'beginning' if prev else 'end'
+	view.window().show_quick_panel( [ msg ], None )		
+					
+class SbsPrevDiffCommand( sublime_plugin.TextCommand ):
+	def run( self, edit, string='' ):
+		sbs_scroll_to( self.view, prev=True )
+					
+class SbsNextDiffCommand( sublime_plugin.TextCommand ):
+	def run( self, edit, string='' ):
+		sbs_scroll_to( self.view )
