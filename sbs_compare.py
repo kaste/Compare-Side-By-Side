@@ -5,6 +5,10 @@ import sublime
 import sublime_plugin
 
 
+def sbs_settings():
+	return sublime.load_settings( 'SBSCompare.sublime-settings' )
+	
+
 class EraseViewCommand( sublime_plugin.TextCommand ):
 	def run( self, edit ):
 		self.view.erase( edit, sublime.Region( 0, self.view.size() ) )
@@ -12,7 +16,62 @@ class EraseViewCommand( sublime_plugin.TextCommand ):
 class InsertViewCommand( sublime_plugin.TextCommand ):
 	def run( self, edit, string='' ):
 		self.view.insert( edit, self.view.size(), string )
+
+
+class SbsLayoutPreserver( sublime_plugin.EventListener ):
+	def count_views( self, ignore=None ):
+		numCompare = 0
+		numNotCompare = 0
+		nonCompareWin = None
+		for w in sublime.windows():
+			for v in w.views():
+				if ignore and v.id() == ignore:
+					continue
+				if v.settings().get( 'is_sbs_compare' ):
+					numCompare += 1
+				else:
+					numNotCompare += 1
+					nonCompareWin = w
+			if len( w.views() ) == 0:
+				nonCompareWin = w
+		return { 'compare': numCompare, 'notCompare': numNotCompare, 'nonCompareWin': nonCompareWin }
+	
+	def on_pre_close( self, view ):
+		# if one comparison view is closed, close the other
+		if view.settings().get( 'is_sbs_compare' ):
+			win = view.window()
+			sublime.set_timeout( lambda: win.run_command( 'close_window' ), 10 )
+			return
 		
+		# if there are no non-comparison views open after this closes...
+		count = self.count_views( ignore=view.id() )
+		if count['compare'] > 0 and count['notCompare'] == 0:
+			last_file = view.file_name()
+			
+			# wait until the view is closed, then check again
+			def after_close():
+				# if there's no non-comparison window still open, make a new one
+				# (there will be if the user only closes a tab!)
+				count = self.count_views()		
+				if count['nonCompareWin'] is None:
+					sublime.active_window().run_command( 'new_window' )
+					win = sublime.active_window()
+					
+					# attempt to restore sidebar and menu visibility
+					if sbs_settings().get( 'toggle_sidebar', False ):
+						win.run_command( 'toggle_side_bar' )
+					if sbs_settings().get( 'toggle_menu', False ):
+						win.run_command( 'toggle_menu' )
+					
+					# reopen last file
+					if last_file is not None:
+						win.open_file( last_file )
+					
+					sublime.set_timeout( lambda: win.show_quick_panel( [ 'Please close all comparison windows first' ], None ), 10 )
+					
+			sublime.set_timeout( after_close, 100 )
+
+
 sbs_markedSelection = [ '', '' ]
 sbs_files = []
 class SbsMarkSelCommand( sublime_plugin.TextCommand ):
@@ -52,10 +111,7 @@ class SbsCompareFilesCommand( sublime_plugin.ApplicationCommand ):
 		window = sublime.active_window()
 		window.run_command( 'sbs_compare' )
 
-class SbsCompareCommand( sublime_plugin.TextCommand ):	
-	def settings( self ):
-		return sublime.load_settings( 'SBSCompare.sublime-settings' )
-		
+class SbsCompareCommand( sublime_plugin.TextCommand ):			
 	def get_view_contents( self, view ):
 		selection = sublime.Region( 0, view.size() )
 		content = view.substr( selection )
@@ -70,7 +126,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		# fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
 		drawType = sublime.DRAW_OUTLINED
 		if int( sublime.version() ) >= 3000:
-			if not self.settings().get( 'outlines_only', False ):
+			if not sbs_settings().get( 'outlines_only', False ):
 				drawType = sublime.DRAW_NO_OUTLINE
 		return drawType
 		
@@ -94,9 +150,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			
 		colour = 'keyword'
 		if col == 'A':
-			colour = self.settings().get( 'remove_colour', 'invalid.illegal' )
+			colour = sbs_settings().get( 'remove_colour', 'invalid.illegal' )
 		elif col == 'B':
-			colour = self.settings().get( 'add_colour', 'string' )
+			colour = sbs_settings().get( 'add_colour', 'string' )
 
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_highlighted-' + col, regionList, colour, '', drawType )
@@ -112,7 +168,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			region = sublime.Region( start, end )
 			regionList.append( region )
 		
-		colour = self.settings().get( 'modified_colour', 'support.class' )
+		colour = sbs_settings().get( 'modified_colour', 'support.class' )
 			
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_intraline-' + col, regionList, colour, '', drawType )
@@ -166,14 +222,14 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			elif code == '? ' and lastB == True:
 				lineNum -= 1
 				
-				if self.settings().get( 'enable_intraline', True ):
+				if sbs_settings().get( 'enable_intraline', True ):
 					s = difflib.SequenceMatcher( None, intraLineA, intraLineB )
 					for tag, i1, i2, j1, j2 in s.get_opcodes():
 						if tag != 'equal': # == replace
 							lnA = lineNum-2
 							lnB = lineNum-1
 							
-							if self.settings().get( 'full_intraline_highlights', False ):
+							if sbs_settings().get( 'full_intraline_highlights', False ):
 								if tag == 'insert':
 									i2 += j2 - j1
 								if tag == 'delete':
@@ -200,14 +256,14 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		self.highlight_lines( view2, highlightB, subHighlightB, 'B' )
 		
 		intraDiff = ''
-		if self.settings().get( 'enable_intraline', True ):
+		if sbs_settings().get( 'enable_intraline', True ):
 			self.sub_highlight_lines( view1, subHighlightA, 'A' )
 			self.sub_highlight_lines( view2, subHighlightB, 'B' )
 			
 			numIntra = len( subHighlightA ) + len( subHighlightB )
 			intraDiff =  str( numIntra ) + ' intra-line modifications\n'
 		
-		if self.settings().get( 'line_count_popup', False ):
+		if sbs_settings().get( 'line_count_popup', False ):
 			numDiffs = len( highlightA ) + len( highlightB )
 			sublime.message_dialog( intraDiff + str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
 
@@ -239,9 +295,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			new_window = sublime.active_window()
 			new_window.set_layout( { "cols": [0.0, 0.5, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1], [1, 0, 2, 1]] } )
 			
-			if self.settings().get( 'toggle_sidebar', False ):
+			if sbs_settings().get( 'toggle_sidebar', False ):
 				new_window.run_command( 'toggle_side_bar' )
-			if self.settings().get( 'toggle_menu', False ):
+			if sbs_settings().get( 'toggle_menu', False ):
 				new_window.run_command( 'toggle_menu' )
 			
 			# view 1
@@ -273,16 +329,20 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			new_window.active_view().set_scratch( True )
 			view2 = new_window.active_view()
 			
+			# keep track of these views			
+			view1.settings().set( "is_sbs_compare", True )
+			view2.settings().set( "is_sbs_compare", True )
+			
 			# run diff
 			self.compare_views( view1, view2 )
 			
 			# make readonly
 			new_window.focus_view( view1 )
-			if self.settings().get( 'read_only', False ):
+			if sbs_settings().get( 'read_only', False ):
 				new_window.active_view().set_read_only( True )
 				
 			new_window.focus_view( view2 )
-			if self.settings().get( 'read_only', False ):
+			if sbs_settings().get( 'read_only', False ):
 				new_window.active_view().set_read_only( True )
 			
 			# activate scroll syncer				
@@ -354,7 +414,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				menu_items = []
 				for tab in openTabs:
 					fileName = tab[0]
-					if self.settings().get( 'expanded_filenames', False ):
+					if sbs_settings().get( 'expanded_filenames', False ):
 						menu_items.append( [ os.path.basename( fileName ), fileName ] )
 					else:
 						menu_items.append( os.path.basename( fileName ) )	
