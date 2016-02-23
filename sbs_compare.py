@@ -196,7 +196,8 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		
 		diff = difflib.ndiff( linesA, linesB, charjunk = None )	
 		
-		lastB = False
+		hasDiffA = False
+		hasDiffB = False
 		intraLineA = ''
 		intraLineB = ''
 		hasIntraline = False
@@ -213,24 +214,25 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				bufferB.append( '' )
 				highlightA.append( lineNum - 1 )
 				intraLineA = text
-				lastB = False
+				hasDiffA = True
 			elif code == '+ ':
 				bufferA.append( '' )
 				bufferB.append( text )
 				highlightB.append( lineNum - 1 )
 				intraLineB = text
-				lastB = True
+				hasDiffB = True
 			elif code == '  ':
 				bufferA.append( text )
 				bufferB.append( text )
-				lastB = False
+				hasDiffA = False
+				hasDiffB = False
 			elif code == '? ':
 				lineNum -= 1
 				hasIntraline = True
 			else:
 				lineNum -= 1
 				
-			if hasIntraline and lastB:		
+			if hasIntraline and hasDiffA and hasDiffB:		
 				if sbs_settings().get( 'enable_intraline', True ):
 					s = difflib.SequenceMatcher( None, intraLineA, intraLineB )
 					for tag, i1, i2, j1, j2 in s.get_opcodes():
@@ -246,7 +248,8 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 							
 							subHighlightA.append( [ lnA, i1, i2 ] )
 							subHighlightB.append( [ lnB, j1, j2 ] )
-				lastB = False
+				hasDiffA = False
+				hasDiffB = False
 				hasIntraline = False
 									
 						
