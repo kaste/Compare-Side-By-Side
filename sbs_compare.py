@@ -416,6 +416,10 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			view1.settings().set( "is_sbs_compare", True )
 			view2.settings().set( "is_sbs_compare", True )
 			
+			# disable word wrap
+			view1.settings().set( 'word_wrap', 'false' )
+			view2.settings().set( 'word_wrap', 'false' )
+			
 			# generate and set colour scheme
 			self.colours = generate_colour_scheme( view1 )
 			generate_colour_scheme( view2, generate=False )
