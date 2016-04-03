@@ -136,7 +136,7 @@ def generate_colour_scheme( view, generate=True ):
 			os.makedirs( theme_file( abs=True, folderOnly=True ) )
 		
 		# save new theme
-		with open( theme_file( abs=True ), 'w' ) as f:
+		with open( theme_file( abs=True ), 'w', encoding='utf-8' ) as f:
 			f.write( data )
 	
 	# set view to use new theme
