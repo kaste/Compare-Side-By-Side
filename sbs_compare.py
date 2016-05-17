@@ -497,6 +497,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			if with_active == True:
 				active_group, active_group_index = active_window.get_view_index( active_view )
 				
+				if group == -1 and index == -1:
+					group = 0 if active_group == 1 else 1
+					other_active_view = active_window.active_view_in_group( group )
+					index = active_window.get_view_index( other_active_view )[1]
+				
 				if index > active_group_index:
 					index -= 1
 					
