@@ -500,6 +500,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				if index > active_group_index:
 					index -= 1
 					
+				if group > active_group:
+					index += len( active_window.views_in_group( active_group ) ) - 1
+				elif group < active_group:
+					index += 1
+					
 				on_click( index )	
 			else:
 				menu_items = []
