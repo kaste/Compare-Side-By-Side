@@ -76,22 +76,23 @@ def generate_colour_scheme( view, generate=True ):
 	# make sure we have hex AND we're >= ST3 (load_resource doesn't work in ST2)	
 	colour_removed = sbs_settings().get( 'remove_colour', 'invalid.illegal' )
 	colour_added = sbs_settings().get( 'add_colour', 'string' )
-	colour_modified = sbs_settings().get( 'modified_colour', 'support.class' )
+	colour_modified_deletion = sbs_settings().get( 'modified_colour_deletion', 'support.class' )
+	colour_modified_addition = sbs_settings().get( 'modified_colour_addition', 'support.class' )
 	colour_text = sbs_settings().get( 'text_colour', '' )
 	
 	notHex = False
-	for col in [ colour_removed, colour_added, colour_modified ]:
+	for col in [ colour_removed, colour_added, colour_modified_deletion, colour_modified_addition ]:
 		if not '#' in col:
 			notHex = True
 	
 	if int( sublime.version() ) < 3000 or notHex:
-		return { 'removed': colour_removed, 'added': colour_added, 'modified': colour_modified }
+		return { 'removed': colour_removed, 'added': colour_added, 'modified_deletion': colour_modified_deletion, 'modified_addition': colour_modified_addition }
 	
 	
 	# generate theme strings
 	colourStrings = {}
 	colourHexes = {}
-	for col in [ [ 'removed', colour_removed ], [ 'added', colour_added ], [ 'modified', colour_modified ] ]:
+	for col in [ [ 'removed', colour_removed ], [ 'added', colour_added ], [ 'modified_deletion', colour_modified_deletion ], [ 'modified_addition', colour_modified_addition ] ]:
 		colourStrings[ col[0] ] = 'comparison.' + col[0]
 		colourHexes[ col[0] ] = col[1]
 	
@@ -223,10 +224,8 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			region = sublime.Region( lineStart, lineEnd )
 			regionList.append( region )
 			
-		colour = 'keyword'
-		if col == 'A':
-			colour = self.colours['removed']
-		elif col == 'B':
+		colour = self.colours['removed']
+		if col == 'B':
 			colour = self.colours['added']
 
 		drawType = self.get_drawtype()			
@@ -244,7 +243,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			region = sublime.Region( start, end )
 			regionList.append( region )
 		
-		colour = colour = self.colours['modified']
+		colour = self.colours['modified_deletion']
+		if col == 'B':
+			colour = self.colours['modified_addition']
 			
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_intraline-' + col, regionList, colour, '', drawType )

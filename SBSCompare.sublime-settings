@@ -29,7 +29,8 @@
 	"add_colour": "#a3be8c",
 	
 	// intraline diffs
-	"modified_colour": "#7fa3c7",
+	"modified_colour_deletion": "#7fa3c7",
+	"modified_colour_addition": "#7fa3c7",
 	
 	// text colour (ST3)
 	"text_colour": "#2b303b",
