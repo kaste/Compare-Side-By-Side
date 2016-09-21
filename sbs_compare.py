@@ -443,6 +443,20 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			# move views to top left
 			view1.set_viewport_position( (0, 0), False )
 			view2.set_viewport_position( (0, 0), False )
+			
+			# move cursors to top left
+			origin = view.text_point( 0, 0 )
+			
+			view1.sel().clear()
+			view1.sel().add( sublime.Region( origin ) )
+			view1.show( origin )
+			
+			view2.sel().clear()
+			view2.sel().add( sublime.Region( origin ) )
+			view2.show( origin )
+			
+			# focus first view
+			new_window.focus_view( view1 )
 
 		def on_click( index ):
 			if index > -1:
@@ -592,44 +606,28 @@ class ViewScrollSyncer( object ):
 
 					
 def sbs_scroll_to( view, prev=False ):
-	first_find = False
-	center_offset = view.settings().get( 'sbs_centeroffset' )
-	if center_offset is None:
-		center_offset = 0
-		first_find = True
-	
-	view_pos = view.viewport_position()
-	current_line = view.rowcol( view_pos[1] + center_offset )[0]
+	current_pos = view.sel()[0].begin()
 	for col in [ 'A', 'B' ]:
 		regions = view.settings().get( 'sbs_markers' )
 		if prev:
 			regions.reverse()
 		
-		for highlight in regions:
-			pos = view.text_to_layout( highlight )
-			diff_line = view.rowcol( pos[1] )[0]
-			# rowcol to ensure we're only ever dealing with absolute line numbers
-			
+		for highlight in regions:			
 			found = False
 			if prev:
-				if diff_line < current_line:
+				if highlight < current_pos:
 					found = True
 			else:
-				if diff_line > current_line:
+				if highlight > current_pos:
 					found = True
 					
-			# always allow the first find so we can calculate the center offset
-			if found or ( not prev and first_find ):
-				view.show_at_center( highlight )
+			if found:
+				view.sel().clear()
+				view.sel().add( sublime.Region( highlight ) )
+				view.show( highlight )
 				
-				# the first find needs to be repeated to "trick" ViewScrollSyncer
-				if first_find:
-					sublime.set_timeout( lambda: view.show_at_center( highlight ), 10 )
-				
-				# store new viewport center offset
-				if view.settings().get( 'sbs_centeroffset' ) == None:
-					center_offset = pos[1] - view.viewport_position()[1]
-					view.settings().set( 'sbs_centeroffset', center_offset )
+				# sometimes necessary, better safe than sorry
+				sublime.set_timeout( lambda: view.show( highlight ), 10 )
 				return
 				
 	msg = 'Reached the '
