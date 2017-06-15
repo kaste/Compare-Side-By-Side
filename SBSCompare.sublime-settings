@@ -49,5 +49,8 @@
 	"outlines_only": false,
 	
 	// show a popup after comparison counting # of lines added/removed/total
-	"line_count_popup": true
+	"line_count_popup": true,
+	
+	// completely ignore whitespace in all diffs
+	"ignore_whitespace": false
 }

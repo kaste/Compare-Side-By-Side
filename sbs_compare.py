@@ -1,4 +1,5 @@
 import os
+import re
 import difflib
 
 import sublime
@@ -258,6 +259,13 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		linesA = view1_contents.splitlines( False )
 		linesB = view2_contents.splitlines( False )
 		
+		if sbs_settings().get( 'ignore_whitespace', False ):
+			view1_contents = re.sub( r'[ \t]', '', view1_contents )
+			view2_contents = re.sub( r'[ \t]', '', view2_contents )
+		
+		diffLinesA = view1_contents.splitlines( False )
+		diffLinesB = view2_contents.splitlines( False )
+		
 		bufferA = []
 		bufferB = []
 		
@@ -267,7 +275,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		subHighlightA = []
 		subHighlightB = []
 		
-		diff = difflib.ndiff( linesA, linesB, charjunk = None )	
+		diff = difflib.ndiff( diffLinesA, diffLinesB, charjunk = None )	
 		
 		hasDiffA = False
 		hasDiffB = False
@@ -276,29 +284,33 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		hasIntraline = False
 			
 		lineNum = 0
+		lineA = 0
+		lineB = 0
 		for line in diff:
 			lineNum += 1
-			
 			code = line[:2]
-			text = line[2:]
 			
 			if code == '- ':
-				bufferA.append( text )
+				bufferA.append( linesA[lineA] )
 				bufferB.append( '' )
 				highlightA.append( lineNum - 1 )
-				intraLineA = text
+				intraLineA = linesA[lineA]
 				hasDiffA = True
+				lineA += 1
 			elif code == '+ ':
 				bufferA.append( '' )
-				bufferB.append( text )
+				bufferB.append( linesB[lineB] )
 				highlightB.append( lineNum - 1 )
-				intraLineB = text
+				intraLineB = linesB[lineB]
 				hasDiffB = True
+				lineB += 1
 			elif code == '  ':
-				bufferA.append( text )
-				bufferB.append( text )
+				bufferA.append( linesA[lineA] )
+				bufferB.append( linesB[lineB] )
 				hasDiffA = False
 				hasDiffB = False
+				lineA += 1
+				lineB += 1
 			elif code == '? ':
 				lineNum -= 1
 				hasIntraline = True
