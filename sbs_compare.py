@@ -618,6 +618,9 @@ class ViewScrollSyncer( object ):
 
 					
 def sbs_scroll_to( view, prev=False ):
+	if not view.settings().get( 'is_sbs_compare' ):
+		return
+		
 	current_pos = view.sel()[0].begin()
 	for col in [ 'A', 'B' ]:
 		regions = view.settings().get( 'sbs_markers' )
