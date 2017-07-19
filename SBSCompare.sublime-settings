@@ -52,5 +52,8 @@
 	"line_count_popup": true,
 	
 	// completely ignore whitespace in all diffs
-	"ignore_whitespace": false
+	"ignore_whitespace": false,
+
+	// completely ignore case in all diffs
+	"ignore_case": false
 }

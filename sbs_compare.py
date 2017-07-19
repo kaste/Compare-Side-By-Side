@@ -262,6 +262,10 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		if sbs_settings().get( 'ignore_whitespace', False ):
 			view1_contents = re.sub( r'[ \t]', '', view1_contents )
 			view2_contents = re.sub( r'[ \t]', '', view2_contents )
+
+		if sbs_settings().get( 'ignore_case', False ):
+			view1_contents = view1_contents.lower()
+			view2_contents = view2_contents.lower()
 		
 		diffLinesA = view1_contents.splitlines( False )
 		diffLinesB = view2_contents.splitlines( False )
