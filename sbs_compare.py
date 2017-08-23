@@ -299,6 +299,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		for line in diff:
 			lineNum += 1
 			code = line[:2]
+			hasIntraline = False
 			
 			if code == '- ':
 				bufferA.append( linesA[lineA] )
@@ -306,6 +307,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				highlightA.append( lineNum - 1 )
 				intraLineA = linesA[lineA]
 				hasDiffA = True
+				hasDiffB = False
 				lineA += 1
 			elif code == '+ ':
 				bufferA.append( '' )
@@ -329,24 +331,29 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				
 			if hasIntraline and hasDiffA and hasDiffB:		
 				if sbs_settings().get( 'enable_intraline', True ):
+					# fixup line alignment
+					assert bufferA[-1] == ''
+					assert bufferB[-2] == ''
+					bufferB[-1] = bufferB.pop()
+					bufferA.pop()
+					highlightB[-1] = highlightA[-1]
+					lineNum -= 1
+					assert highlightB[-1] == lineNum - 1
+
 					s = difflib.SequenceMatcher( None, intraLineA, intraLineB )
 					for tag, i1, i2, j1, j2 in s.get_opcodes():
 						if tag != 'equal': # == replace
-							lnA = lineNum-2
-							lnB = lineNum-1
-							
 							if sbs_settings().get( 'intraline_emptyspace', False ):
 								if tag == 'insert':
 									i2 += j2 - j1
 								if tag == 'delete':
 									j2 += i2 - i1
 							
-							subHighlightA.append( [ lnA, i1, i2 ] )
-							subHighlightB.append( [ lnB, j1, j2 ] )
+							subHighlightA.append( [ lineNum - 1, i1, i2 ] )
+							subHighlightB.append( [ lineNum - 1, j1, j2 ] )
 				hasDiffA = False
 				hasDiffB = False
-				hasIntraline = False
-									
+
 						
 		window = sublime.active_window()
 		
