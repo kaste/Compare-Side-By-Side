@@ -259,6 +259,12 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		linesA = view1_contents.splitlines( False )
 		linesB = view2_contents.splitlines( False )
 		
+		if sbs_settings().has( 'ignore_pattern' ):
+			ignore_pattern = sbs_settings().get( 'ignore_pattern' )
+			pattern = re.compile(ignore_pattern, re.MULTILINE)
+			view1_contents = pattern.sub( '', view1_contents )
+			view2_contents = pattern.sub( '', view2_contents )
+		
 		if sbs_settings().get( 'ignore_whitespace', False ):
 			view1_contents = re.sub( r'[ \t]', '', view1_contents )
 			view2_contents = re.sub( r'[ \t]', '', view2_contents )
