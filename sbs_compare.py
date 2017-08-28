@@ -292,6 +292,19 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		intraLineA = ''
 		intraLineB = ''
 		hasIntraline = False
+
+		'''
+		An "intraline" difference is always a '-' line, possibly followed by
+		'?' line, and immediately followed by a '+' line; the next line after
+		that '+' might be another '?' line as well, or not. This is all
+		dependent on whether the new file line (view2's) added, removed, or
+		just changed characters relative to the original. If the new file line
+		has more characters but no other differences, then the diff sequence
+		would be '-', '+', '?'; if the new file has fewer characters but no
+		other differences, the sequence will be '-', '?', '+'; if the new file
+		has other character differences relative to the original, then the
+		sequence will be '-', '?', '+', '?'.
+		'''
 			
 		lineNum = 0
 		lineA = 0
@@ -299,7 +312,6 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		for line in diff:
 			lineNum += 1
 			code = line[:2]
-			hasIntraline = False
 			
 			if code == '- ':
 				bufferA.append( linesA[lineA] )
@@ -308,6 +320,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				intraLineA = linesA[lineA]
 				hasDiffA = True
 				hasDiffB = False
+				hasIntraline = False
 				lineA += 1
 			elif code == '+ ':
 				bufferA.append( '' )
@@ -321,6 +334,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				bufferB.append( linesB[lineB] )
 				hasDiffA = False
 				hasDiffB = False
+				hasIntraline = False
 				lineA += 1
 				lineB += 1
 			elif code == '? ':
@@ -353,6 +367,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 							subHighlightB.append( [ lineNum - 1, j1, j2 ] )
 				hasDiffA = False
 				hasDiffB = False
+				hasIntraline = False
 
 						
 		window = sublime.active_window()
