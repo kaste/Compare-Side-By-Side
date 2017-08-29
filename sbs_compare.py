@@ -388,7 +388,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			self.sub_highlight_lines( view1, subHighlightA, 'A' )
 			self.sub_highlight_lines( view2, subHighlightB, 'B' )
 			
-			numIntra = len( subHighlightA ) + len( subHighlightB )
+			numIntra = len( subHighlightB )
 			intraDiff =  str( numIntra ) + ' intra-line modifications\n'
 		
 		if sbs_settings().get( 'line_count_popup', False ):
