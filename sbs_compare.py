@@ -128,7 +128,13 @@ def generate_colour_scheme( view, generate=True ):
 			
 		# get current scheme xml
 		current_scheme = view.settings().get( 'color_scheme' )  # no 'u' >:(
-		scheme = sublime.load_resource( current_scheme )
+		try:
+			scheme = sublime.load_resource( current_scheme )
+		except:
+			# sometimes load_resource can fail (seemingly on OSX when upgrading from ST2->ST3)
+			# manually re-selecting the colour scheme once should fix this for good (see issue #31)
+			sublime.message_dialog( 'Could not load colour scheme.\nFalling back to a blank colour scheme.\n\nTo fix this, please manually re-select your colour scheme in\n\tPreferences > Color Scheme\n\nThis should not happen again once action has been taken.\nSorry for the inconvenience.' )
+			scheme = '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>settings</key><array></array></dict></plist>'
 		
 		# combiiiiiiiiiiiiine
 		dropzone = scheme.rfind( '</array>' )
