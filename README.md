@@ -2,7 +2,7 @@ Compare Side-By-Side
 ================
 This package adds a simple side-by-side comparison tool to Sublime Text 2 and 3.
 
-![Screenshot](http://dougty.com/files/SBSCompareScreenshot2.png)
+![Screenshot](http://dougty.com/files/SBSCompareScreenshot3.png)
 
 Features
 ---
@@ -36,3 +36,8 @@ Configuration
   - Highlight colours and other options can be configured in SBSCompare.sublime-settings
   - Hotkeys can be changed in the included `Default (PLATFORM).sublime-keys` files
   - To access: *Preferences -> Package Settings -> Compare Side-By-Side*
+
+License & Contributing
+---
+ - [MIT license](LICENSE)
+ - Pull requests welcome!
