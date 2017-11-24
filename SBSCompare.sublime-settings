@@ -1,7 +1,8 @@
-{	
-	// make the comparison output read only (recommended)
-	"read_only": true,
-	
+{
+	// show a popup after comparison counting # of lines added/removed/total
+	"line_count_popup": true,
+
+
 	// hide the sidebar in comparison output windows
 	"hide_sidebar": true,
 	
@@ -16,6 +17,7 @@
 	
 	// hide tabs in comparison output windows (ST3 only)
 	"hide_tabs": false,
+
 	
 	// COLOURS
 	// in ST3 these can be hex!
@@ -37,6 +39,11 @@
 	
 	// text colour (ST3)
 	"text_colour": "#2b303b",
+
+	// only draw outlines (no background colour filling)
+	// note: fill highlighting (false) only works on ST3
+	// ST2 will always use outlines only
+	"outlines_only": false,
 	
 	
 	// enable or disable intraline diffing
@@ -45,24 +52,21 @@
 	// highlight intraline empty space where characters are missing
 	// useful, but can get a rather chaotic looking
 	"intraline_emptyspace": false,
-	
-	// only draw outlines (no background colour filling)
-	// note: fill highlighting (false) only works on ST3
-	// ST2 will always use outlines only
-	"outlines_only": false,
-	
-	// show a popup after comparison counting # of lines added/removed/total
-	"line_count_popup": true,
-	
-	// uncomment and set to a string to prefix the new window with
-	// "display_prefix": "DIFF: ",
 
-	// uncomment and set to a regex pattern to ignore
-	// "ignore_pattern": "^[A-Za-z]{3} [0-9]{2} [0-2][0-9]:[0-5][0-9]:[0-5][0-9]\\.[0-9]{3}",
 	
 	// completely ignore whitespace in all diffs
 	"ignore_whitespace": false,
 
 	// completely ignore case in all diffs
-	"ignore_case": false
+	"ignore_case": false,
+
+	// uncomment and set to a regex pattern to ignore
+	// "ignore_pattern": "^[A-Za-z]{3} [0-9]{2} [0-2][0-9]:[0-5][0-9]:[0-5][0-9]\\.[0-9]{3}",
+
+
+	// uncomment and set to a string to prefix the new window with
+	// "display_prefix": "DIFF: ",
+
+	// make the comparison output read only (recommended)
+	"read_only": true
 }
