@@ -2,30 +2,20 @@
 	// make the comparison output read only (recommended)
 	"read_only": true,
 	
-	// toggle the sidebar on/off upon opening the comparison output window
-	// turn this on if you usually have the sidebar open in your main window
-	// if you're using ST3 then you can use hide_sidebar instead
-	"toggle_sidebar": true,
+	// hide the sidebar in comparison output windows
+	"hide_sidebar": true,
 	
-	// toggle the top menu on/off upon opening the comparison output window
-	// turn this on if you usually have the menu hidden in your main window
-	// if you're using ST3 then you can use hide_menu instead
-	"toggle_menu": true,
+	// hide the menu in comparison output windows
+	"hide_menu": true,
 	
-	// uncomment to hide the sidebar (ST3 only)
-	// "hide_sidebar": true,
+	//  hide the minimap in comparison output windows (ST3 only)
+	"hide_minimap": false,
 	
-	// uncomment to hide the menu (ST3 only)
-	// "hide_menu": true,
+	// hide the status bar in comparison output windows (ST3 only)
+	"hide_status_bar": false,
 	
-	//  uncomment to hide the minimap (ST3 only)
-	// "hide_minimap": true,
-	
-	// uncomment to hide the status bar (ST3 only)
-	// "hide_status_bar": true,
-	
-	// uncomment to hide tabs (ST3 only)
-	// "hide_tabs": true,
+	// hide tabs in comparison output windows (ST3 only)
+	"hide_tabs": false,
 	
 	// COLOURS
 	// in ST3 these can be hex!

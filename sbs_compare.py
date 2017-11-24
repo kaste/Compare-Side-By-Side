@@ -58,11 +58,12 @@ class SbsLayoutPreserver( sublime_plugin.EventListener ):
 					sublime.active_window().run_command( 'new_window' )
 					win = sublime.active_window()
 					
-					# attempt to restore sidebar and menu visibility
-					if sbs_settings().get( 'toggle_sidebar', False ):
-						win.run_command( 'toggle_side_bar' )
-					if sbs_settings().get( 'toggle_menu', False ):
-						win.run_command( 'toggle_menu' )
+					# attempt to restore sidebar and menu visibility on ST2
+					if int( sublime.version() ) < 3000:
+						if sbs_settings().get( 'hide_sidebar', False ):
+							win.run_command( 'toggle_side_bar' )
+						if sbs_settings().get( 'hide_menu', False ):
+							win.run_command( 'toggle_menu' )
 					
 					# reopen last file
 					if last_file is not None:
@@ -428,11 +429,6 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			active_window.run_command( 'new_window' )		
 			new_window = sublime.active_window()
 			new_window.set_layout( { "cols": [0.0, 0.5, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1], [1, 0, 2, 1]] } )
-			
-			if sbs_settings().get( 'toggle_sidebar', False ):
-				new_window.run_command( 'toggle_side_bar' )
-			if sbs_settings().get( 'toggle_menu', False ):
-				new_window.run_command( 'toggle_menu' )
 
 			if int( sublime.version() ) >= 3000:
 				if sbs_settings().get( 'hide_sidebar', False ):
@@ -445,6 +441,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 					new_window.set_status_bar_visible(False)
 				if sbs_settings().get( 'hide_tabs', False ):
 					new_window.set_tabs_visible(False)
+			else:
+				if sbs_settings().get( 'hide_sidebar', False ):
+					new_window.run_command( 'toggle_side_bar' )
+				if sbs_settings().get( 'hide_menu', False ):
+					new_window.run_command( 'toggle_menu' )
 
 			# view names
 			view_prefix = sbs_settings().get( 'display_prefix', '' )
