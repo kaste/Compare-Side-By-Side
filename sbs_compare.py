@@ -445,12 +445,8 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 					new_window.set_status_bar_visible(False)
 				if sbs_settings().get( 'hide_tabs', False ):
 					new_window.set_tabs_visible(False)
-			
-			# view 1
-			new_window.run_command( 'new_file' )
-			new_window.run_command( 'insert_view', { 'string': view1_contents } )
-			new_window.active_view().set_syntax_file( view1_syntax )
-			
+
+			# view names
 			view_prefix = sbs_settings().get( 'display_prefix', '' )
 
 			view1_name = 'untitled'
@@ -460,7 +456,34 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				view1_name = active_view.name()
 			if name1_override != False:
 				view1_name = name1_override
-			new_window.active_view().set_name( view_prefix + os.path.basename( view1_name ) + ' (active)' )
+
+			view1_name = os.path.basename( view1_name )
+			view2_name = os.path.basename( name2_override )
+
+			if view1_name == view2_name:
+				dirname1 = os.path.dirname( view1_name )
+				dirname2 = os.path.dirname( view2_name )
+
+				path_prefix = os.path.commonprefix( [ dirname1, dirname2 ] )
+				if path_prefix != '':
+					path_prefix = path_prefix.replace( '\\', '/' )
+					path_prefix = path_prefix.split( '/' )[:-1] # leave last directory in path
+					path_prefix = '/'.join( path_prefix ) + '/'
+					plen = len( path_prefix )
+					dirname1 = dirname1[plen:]
+					dirname2 = dirname2[plen:]
+
+				view1_name = os.path.basename( view1_name ) + ' — ' + dirname1
+				view2_name = os.path.basename( view2_name ) + ' — ' + dirname2
+
+			view1_name += ' (active)'
+			view2_name += ' (other)'
+			
+			# view 1
+			new_window.run_command( 'new_file' )
+			new_window.run_command( 'insert_view', { 'string': view1_contents } )
+			new_window.active_view().set_syntax_file( view1_syntax )
+			new_window.active_view().set_name( view_prefix + view1_name )
 				
 			new_window.active_view().set_scratch( True )	
 			view1 = new_window.active_view()
@@ -469,7 +492,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			new_window.run_command( 'new_file' )
 			new_window.run_command( 'insert_view', { 'string': view2_contents } )
 			new_window.active_view().set_syntax_file( view2_syntax )
-			new_window.active_view().set_name( view_prefix + os.path.basename( name2_override ) + ' (other)' )
+			new_window.active_view().set_name( view_prefix + view2_name )
 			
 			# move view 2 to group 2
 			new_window.set_view_index( new_window.active_view(), 1, 0 )
@@ -594,10 +617,10 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 				menu_items = []
 				for tab in openTabs:
 					fileName = tab[0]
-					if sbs_settings().get( 'expanded_filenames', False ):
-						menu_items.append( [ os.path.basename( fileName ), fileName ] )
+					if os.path.basename( fileName ) == fileName:
+						menu_items.append( [ os.path.basename( fileName ), '' ] )
 					else:
-						menu_items.append( os.path.basename( fileName ) )	
+						menu_items.append( [ os.path.basename( fileName ), fileName ] )
 				sublime.set_timeout( self.view.window().show_quick_panel( menu_items, on_click ) )
 
 

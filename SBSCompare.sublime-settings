@@ -1,7 +1,4 @@
-{
-	// should filenames show full paths underneath them?
-	"expanded_filenames": true,
-	
+{	
 	// make the comparison output read only (recommended)
 	"read_only": true,
 	
