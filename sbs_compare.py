@@ -449,6 +449,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 
 			# view names
 			view_prefix = sbs_settings().get( 'display_prefix', '' )
+			view2_name = name2_override
 
 			view1_name = 'untitled'
 			if active_view.file_name():
@@ -458,10 +459,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			if name1_override != False:
 				view1_name = name1_override
 
-			view1_name = os.path.basename( view1_name )
-			view2_name = os.path.basename( name2_override )
-
-			if view1_name == view2_name:
+			name1base = os.path.basename( view1_name )
+			name2base = os.path.basename( view2_name )
+			if name1base == name2base:
 				dirname1 = os.path.dirname( view1_name )
 				dirname2 = os.path.dirname( view2_name )
 
@@ -474,8 +474,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 					dirname1 = dirname1[plen:]
 					dirname2 = dirname2[plen:]
 
-				view1_name = os.path.basename( view1_name ) + ' — ' + dirname1
-				view2_name = os.path.basename( view2_name ) + ' — ' + dirname2
+				view1_name = name1base + ' — ' + dirname1
+				view2_name = name2base + ' — ' + dirname2
+			else:
+				view1_name = name1base
+				view2_name = name2base
 
 			view1_name += ' (active)'
 			view2_name += ' (other)'
