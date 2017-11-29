@@ -1,3 +1,5 @@
+# coding: utf8
+
 import os
 import re
 import difflib
@@ -474,8 +476,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 					dirname1 = dirname1[plen:]
 					dirname2 = dirname2[plen:]
 
-				view1_name = name1base + ' — ' + dirname1
-				view2_name = name2base + ' — ' + dirname2
+				separator = ' - '
+				if int( sublime.version() ) >= 3000:
+					separator = ' — '
+				view1_name = name1base + separator + dirname1
+				view2_name = name2base + separator + dirname2
 			else:
 				view1_name = name1base
 				view2_name = name2base
