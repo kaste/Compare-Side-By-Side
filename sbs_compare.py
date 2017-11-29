@@ -481,6 +481,10 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 					separator = ' — '
 				view1_name = name1base + separator + dirname1
 				view2_name = name2base + separator + dirname2
+
+				if dirname1 == dirname2:
+					view1_name = name1base
+					view2_name = name2base
 			else:
 				view1_name = name1base
 				view2_name = name2base
