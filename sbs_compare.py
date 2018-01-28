@@ -176,8 +176,6 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 
 			# create format specific data
 			if scheme_json:
-				tmpl = '{"name": "{}","scope": "{}","background": "{}","foreground": "{}"},'
-
 				for name in colourStrings:
 					string = colourStrings[name]
 					chex = colourHexes[name]
@@ -202,12 +200,12 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			# relative for settings, absolute for writing to file
 			# replacing slashes for relative path necessary on windows
 			# completely separate filenames are necessary to avoid json erroneously taking precedence
-			themename = 'SBSCompareTheme.tmTheme'
+			theme_name = 'SBSCompareTheme.tmTheme'
 			if scheme_json:
-				themename = 'SBSCompareScheme.sublime-color-scheme'
+				theme_name = 'SBSCompareScheme.sublime-color-scheme'
 	
-			abs_theme_file = os.path.join( sublime.packages_path(), 'User', themename )
-			rel_theme_file = os.path.join( os.path.basename( sublime.packages_path() ), 'User', themename )
+			abs_theme_file = os.path.join( sublime.packages_path(), 'User', theme_name )
+			rel_theme_file = os.path.join( os.path.basename( sublime.packages_path() ), 'User', theme_name )
 			rel_theme_file = rel_theme_file.replace( '\\', '/' )
 			
 			# save new theme
