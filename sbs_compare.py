@@ -271,19 +271,28 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 	def sub_highlight_lines( self, view, lines, col ):
 		# intra-line diffs
 		regionList = []
+		lineRegionList = []
 		for diff in lines:
 			lineNum = diff[0]
 			start = view.text_point( lineNum, diff[1] )
 			end = view.text_point( lineNum, diff[2] )
-			
+			lineStart = view.text_point( lineNum, 0 )
+			lineEnd = view.text_point( lineNum+1, -1 )
+
 			region = sublime.Region( start, end )
 			regionList.append( region )
+			
+			lineRegion = sublime.Region( lineStart, lineEnd )
+			lineRegionList.append(lineRegion)
 		
 		colour = self.colours['modified_deletion']
+		colourUnmodified = self.colours['unmodified_deletion']
 		if col == 'B':
 			colour = self.colours['modified_addition']
+			colourUnmodified = self.colours['unmodified_addition']
 			
 		drawType = self.get_drawtype()			
+		view.add_regions( 'diff_intraline_unmodified-' + col, lineRegionList, colourUnmodified, '', drawType )
 		view.add_regions( 'diff_intraline-' + col, regionList, colour, '', drawType )
 				
 		
