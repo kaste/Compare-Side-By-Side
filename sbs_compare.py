@@ -137,20 +137,22 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		colour_added = sbs_settings().get( 'add_colour', 'string' )
 		colour_modified_deletion = sbs_settings().get( 'modified_colour_deletion', 'support.class' )
 		colour_modified_addition = sbs_settings().get( 'modified_colour_addition', 'support.class' )
+		colour_unmodified_deletion = sbs_settings().get( 'unmodified_colour_deletion', 'invalid.illegal' )
+		colour_unmodified_addition = sbs_settings().get( 'unmodified_colour_addition', 'string' )
 		colour_text = sbs_settings().get( 'text_colour', '' )
 		
 		notHex = False
-		for col in [ colour_removed, colour_added, colour_modified_deletion, colour_modified_addition ]:
+		for col in [ colour_removed, colour_added, colour_modified_deletion, colour_modified_addition, colour_unmodified_deletion, colour_unmodified_addition ]:
 			if not '#' in col:
 				notHex = True
 		
 		if int( sublime.version() ) < 3000 or notHex:
-			return { 'removed': colour_removed, 'added': colour_added, 'modified_deletion': colour_modified_deletion, 'modified_addition': colour_modified_addition }
+			return { 'removed': colour_removed, 'added': colour_added, 'modified_deletion': colour_modified_deletion, 'modified_addition': colour_modified_addition, 'unmodified_deletion': colour_unmodified_deletion, 'unmodified_addition': colour_unmodified_addition }
 		
 		# generate theme strings
 		colourStrings = {}
 		colourHexes = {}
-		for col in [ [ 'removed', colour_removed ], [ 'added', colour_added ], [ 'modified_deletion', colour_modified_deletion ], [ 'modified_addition', colour_modified_addition ] ]:
+		for col in [ [ 'removed', colour_removed ], [ 'added', colour_added ], [ 'modified_deletion', colour_modified_deletion ], [ 'modified_addition', colour_modified_addition ], [ 'unmodified_deletion', colour_unmodified_deletion ], [ 'unmodified_addition', colour_unmodified_addition ] ]:
 			colourStrings[ col[0] ] = 'comparison.' + col[0]
 			colourHexes[ col[0] ] = col[1]
 
