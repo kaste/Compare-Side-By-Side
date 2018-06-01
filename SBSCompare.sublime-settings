@@ -34,11 +34,11 @@
 	"add_colour": "#a3be8c",
 	
 	// intraline diffs
-	"unmodified_colour_deletion": "#bf616a",
-	"modified_colour_deletion": "#7fa3c7",
+	"unmodified_colour_deletion": "#d5979d",
+	"modified_colour_deletion": "#bf616a",
 
-	"unmodified_colour_addition": "#a3be8c",
-	"modified_colour_addition": "#7fa3c7",
+	"unmodified_colour_addition": "#cadabd",
+	"modified_colour_addition": "#a3be8c",
 	
 	// text colour (ST3)
 	"text_colour": "#2b303b",
