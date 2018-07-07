@@ -171,7 +171,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			# determine if scheme is using the new .sublime-color-scheme json format
 			scheme_json = False
 			try:
-				scheme = json.loads( scheme )
+				scheme = sublime.decode_value( scheme )
 				scheme_json = True
 			except:
 				scheme_json = False
