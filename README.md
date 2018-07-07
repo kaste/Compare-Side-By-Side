@@ -2,7 +2,7 @@ Compare Side-By-Side
 ================
 This package adds a simple side-by-side comparison tool to Sublime Text 2 and 3.
 
-![Screenshot](http://dougty.com/files/SBSCompareScreenshot3.png)
+![Screenshot](https://dougty.com/files/SBSCompareScreenshot5.png)
 
 Features
 ---
