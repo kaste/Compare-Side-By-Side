@@ -211,8 +211,11 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			rel_theme_file = rel_theme_file.replace( '\\', '/' )
 			
 			# save new theme
-			with open( abs_theme_file, 'w', encoding='utf-8' ) as f:
-				f.write( data )
+			try:
+				with open( abs_theme_file, 'w', encoding='utf-8' ) as f:
+					f.write( data )
+			except:
+				sublime.message_dialog( 'Could not write theme file.\nPlease ensure that your Sublime config directory is writeable and restart Sublime.\n\nFull path:\n' + abs_theme_file )
 
 			# save filename for later use (if we rerun this without regenerating)
 			self.last_theme_file = rel_theme_file
