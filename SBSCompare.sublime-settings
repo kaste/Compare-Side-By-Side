@@ -58,7 +58,7 @@
 
 	
 	// completely ignore whitespace in all diffs
-	"ignore_whitespace": false,
+	"ignore_whitespace": true,
 
 	// completely ignore case in all diffs
 	"ignore_case": false,
