@@ -29,7 +29,7 @@ Usage Options
    - Mark a second selection, then right click -> "Compare selections"
   - Create two selections by holding CTRL, then "Compare selections"
   - From the command line: [see README_COMMANDS.md](README_COMMANDS.md)
-  - Jump to next: `Alt+Shift+Down`, Jump to previous: `Alt+Shift+Up`
+  - Jump to next: `Alt+N`, Jump to previous: `Alt+P`
   
 Configuration
 ---
