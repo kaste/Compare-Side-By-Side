@@ -17,10 +17,10 @@ def plugin_loaded():
 	if not os.path.exists( folder ):
 		os.makedirs( folder )
 	
-	with open( os.path.join( folder, 'SBSCompareTheme.tmTheme' ), 'w', encoding='utf-8' ) as f:
+	with open( os.path.join( folder, 'SBSCompareTheme.hidden-tmTheme' ), 'w', encoding='utf-8' ) as f:
 		f.write( '' )
 
-	with open( os.path.join( folder, 'SBSCompareScheme.sublime-color-scheme' ), 'w', encoding='utf-8' ) as f:
+	with open( os.path.join( folder, 'SBSCompareScheme.hidden-color-scheme' ), 'w', encoding='utf-8' ) as f:
 		f.write( '' )
 
 
@@ -202,9 +202,9 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			# relative for settings, absolute for writing to file
 			# replacing slashes for relative path necessary on windows
 			# completely separate filenames are necessary to avoid json erroneously taking precedence
-			theme_name = 'SBSCompareTheme.tmTheme'
+			theme_name = 'SBSCompareTheme.hidden-tmTheme'
 			if scheme_json:
-				theme_name = 'SBSCompareScheme.sublime-color-scheme'
+				theme_name = 'SBSCompareScheme.hidden-color-scheme'
 	
 			abs_theme_file = os.path.join( sublime.packages_path(), 'User', theme_name )
 			rel_theme_file = os.path.join( os.path.basename( sublime.packages_path() ), 'User', theme_name )
