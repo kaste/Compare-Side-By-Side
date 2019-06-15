@@ -159,7 +159,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		# generate modified theme
 		if generate:
 			# load current scheme
-			current_scheme = view.settings().get( 'color_scheme' )  # no 'u' >:(
+			current_scheme = self.get_current_color_scheme( view )
 			try:
 				scheme = sublime.load_resource( current_scheme )
 			except:
@@ -223,6 +223,21 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		# set view settings to use new theme
 		view.settings().set( 'color_scheme', self.last_theme_file )
 		return colourStrings
+
+	def get_current_color_scheme( self, view ):
+		current_scheme = view.settings().get( 'color_scheme' )  # no 'u' >:(
+
+		packages_path = os.path.basename( sublime.packages_path() )
+
+		# The default 'color_scheme' setting only has the file name
+		# and it's inside the 'Color Scheme - Default' package.
+		if not current_scheme.startswith(packages_path + '/'):
+			rel_current_scheme_file = os.path.join( packages_path, 'Color Scheme - Default', current_scheme )
+			rel_current_scheme_file = rel_current_scheme_file.replace( '\\', '/' )
+
+			current_scheme = rel_current_scheme_file
+
+		return current_scheme
 
 	def get_view_contents( self, view ):
 		selection = sublime.Region( 0, view.size() )
