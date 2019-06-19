@@ -11,5 +11,9 @@
         "caption": "Compare selections",
         "command": "sbs_compare",
         "args": { "compare_selections": true }
+    },
+    {
+        "caption": "Select compared text...",
+        "command": "sbs_select_text"
     }
 ]

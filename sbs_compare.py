@@ -815,3 +815,35 @@ class SbsPrevDiffCommand( sublime_plugin.TextCommand ):
 class SbsNextDiffCommand( sublime_plugin.TextCommand ):
 	def run( self, edit, string='' ):
 		sbs_scroll_to( self.view )
+
+
+class SbsSelectTextCommand( sublime_plugin.TextCommand ):
+	def run( self, edit, index='' ):
+		window = self.view.window()
+
+		if index == '':
+			menu_items = [ 'Select removed text', 'Select added text' ]
+			window.show_quick_panel( menu_items, lambda i: window.run_command( 'sbs_select_text', { 'index': i } ) )
+			return
+
+		view = window.views()[index]
+		view.sel().clear()
+		regions = view.get_regions( 'diff_highlighted-A' ) + view.get_regions( 'diff_highlighted-B' ) + view.get_regions( 'diff_intraline-A' ) + view.get_regions( 'diff_intraline-B' )
+
+		combined_regions = []
+		# hacky but necessary to combine regions both start==end AND end==start
+		# there's probably a better way to do this
+		for it in range( 0, 2 ):
+			for r in regions:
+				skip = False
+				for cr in combined_regions:
+					if r.a == cr.b or r.b == cr.a:
+						cr.b = max( r.b, cr.b )
+						skip = True
+						break
+				if not skip:
+					combined_regions.append( r )
+
+		for r in combined_regions:
+			view.sel().add( r )
+
