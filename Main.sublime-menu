@@ -7,17 +7,16 @@
 		"children":
 		[{
 			"caption": "Compare Side-By-Side",
-			"children":
-			[{
-				"caption": "Settings – Default",
-				"command": "open_file",
-				"args": { "file": "${packages}/Compare Side-By-Side/SBSCompare.sublime-settings" }
-			},
-			{
-				"caption": "Settings – User",
-				"command": "open_file",
-				"args": { "file": "${packages}/User/SBSCompare.sublime-settings" }
-			}]
+			"children": [
+			    {
+			        "caption": "Settings",
+			        "command": "edit_settings", "args":
+			        {
+			            "base_file": "${packages}/Compare Side-By-Side/SBSCompare.sublime-settings",
+			            "default": "{\n\t$0\n}\n"
+			        }
+			    }
+			]
 		}]
 	}]
 }]
