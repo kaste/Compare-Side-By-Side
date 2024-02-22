@@ -2,8 +2,6 @@ Compare Side-By-Side
 ================
 This package adds a simple side-by-side comparison tool to Sublime Text 2 and 3.
 
-![Screenshot](https://dougty.com/files/SBSCompareScreenshot5.png)
-
 Features
 ---
   - Easily select two tabs or selections to compare
@@ -41,3 +39,4 @@ License & Contributing
 ---
  - [MIT license](LICENSE)
  - Pull requests welcome!
+ - Fork of https://bitbucket.org/dougty/sublime-compare-side-by-side/
