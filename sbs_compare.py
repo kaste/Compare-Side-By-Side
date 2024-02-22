@@ -46,11 +46,11 @@ def sbs_settings():
 	return sublime.load_settings( 'SBSCompare.sublime-settings' )
 	
 
-class EraseViewCommand( sublime_plugin.TextCommand ):
+class sbs_erase_view( sublime_plugin.TextCommand ):
 	def run( self, edit ):
 		self.view.erase( edit, sublime.Region( 0, self.view.size() ) )
 
-class InsertViewCommand( sublime_plugin.TextCommand ):
+class sbs_insert_view( sublime_plugin.TextCommand ):
 	def run( self, edit, string='' ):
 		self.view.insert( edit, self.view.size(), string )
 
@@ -111,7 +111,7 @@ class SbsLayoutPreserver( sublime_plugin.EventListener ):
 
 sbs_markedSelection = [ '', '' ]
 sbs_files = []
-class SbsMarkSelCommand( sublime_plugin.TextCommand ):
+class sbs_mark_sel( sublime_plugin.TextCommand ):
 	def run( self, edit ):
 		global sbs_markedSelection
 		
@@ -125,7 +125,7 @@ class SbsMarkSelCommand( sublime_plugin.TextCommand ):
 		sbs_markedSelection[0] = sbs_markedSelection[1]
 		sbs_markedSelection[1] = selectionText
 		
-class SbsCompareFilesCommand( sublime_plugin.ApplicationCommand ):
+class sbs_compare_files( sublime_plugin.ApplicationCommand ):
 	def run( self, A=None, B=None ):
 		global sbs_files
 		
@@ -148,7 +148,7 @@ class SbsCompareFilesCommand( sublime_plugin.ApplicationCommand ):
 		window = sublime.active_window()
 		window.run_command( 'sbs_compare' )
 
-class SbsCompareCommand( sublime_plugin.TextCommand ):			
+class sbs_compare( sublime_plugin.TextCommand ):
 	def generate_colour_scheme( self, view, generate=True ):
 		# make sure we have hex AND we're >= ST3 (load_resource doesn't work in ST2)	
 		colour_removed = sbs_settings().get( 'remove_colour', 'invalid.illegal' )
@@ -453,12 +453,12 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 		window = sublime.active_window()
 		
 		window.focus_view( view1 )
-		window.run_command( 'erase_view' )
-		window.run_command( 'insert_view', { 'string': '\n'.join( bufferA ) } )
+		window.run_command( 'sbs_erase_view' )
+		window.run_command( 'sbs_insert_view', { 'string': '\n'.join( bufferA ) } )
 		
 		window.focus_view( view2 )
-		window.run_command( 'erase_view' )
-		window.run_command( 'insert_view', { 'string': '\n'.join( bufferB ) } )
+		window.run_command( 'sbs_erase_view' )
+		window.run_command( 'sbs_insert_view', { 'string': '\n'.join( bufferB ) } )
 		
 		self.highlight_lines( view1, highlightA, subHighlightA, 'A' )			
 		self.highlight_lines( view2, highlightB, subHighlightB, 'B' )
@@ -565,7 +565,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			
 			# view 1
 			new_window.run_command( 'new_file' )
-			new_window.run_command( 'insert_view', { 'string': view1_contents } )
+			new_window.run_command( 'sbs_insert_view', { 'string': view1_contents } )
 			new_window.active_view().set_syntax_file( view1_syntax )
 			new_window.active_view().set_name( view_prefix + view1_name )
 				
@@ -574,7 +574,7 @@ class SbsCompareCommand( sublime_plugin.TextCommand ):
 			
 			# view 2
 			new_window.run_command( 'new_file' )
-			new_window.run_command( 'insert_view', { 'string': view2_contents } )
+			new_window.run_command( 'sbs_insert_view', { 'string': view2_contents } )
 			new_window.active_view().set_syntax_file( view2_syntax )
 			new_window.active_view().set_name( view_prefix + view2_name )
 
@@ -809,16 +809,16 @@ def sbs_scroll_to( view, prev=False ):
 	msg += 'beginning' if prev else 'end'
 	view.window().show_quick_panel( [ msg ], None )		
 					
-class SbsPrevDiffCommand( sublime_plugin.TextCommand ):
+class sbs_prev_diff( sublime_plugin.TextCommand ):
 	def run( self, edit, string='' ):
 		sbs_scroll_to( self.view, prev=True )
 					
-class SbsNextDiffCommand( sublime_plugin.TextCommand ):
+class sbs_next_diff( sublime_plugin.TextCommand ):
 	def run( self, edit, string='' ):
 		sbs_scroll_to( self.view )
 
 
-class SbsSelectTextCommand( sublime_plugin.TextCommand ):
+class sbs_select_text( sublime_plugin.TextCommand ):
 	def run( self, edit, index='' ):
 		window = self.view.window()
 
