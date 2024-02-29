@@ -725,7 +725,7 @@ class ViewScrollSyncer( object ):
 			view1.set_viewport_position( view2.viewport_position(), False )
 		
 	def run( self ):
-		if not self.window:
+		if not self.window.is_valid():
 			return
 		
 		if self.window.id() != sublime.active_window().id():
@@ -735,7 +735,7 @@ class ViewScrollSyncer( object ):
 		view1 = self.views[0]
 		view2 = self.views[1]
 		
-		if not view1 or not view2:
+		if not view1.is_valid() or not view2.is_valid():
 			return
 		
 		vecA = view1.viewport_position()
