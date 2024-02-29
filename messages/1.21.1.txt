@@ -1,0 +1,10 @@
+Compare Side-by-Side 1.21.x
+---------------------------
+
+Compare Side-by-Side is alive again.  If you've had a local override to make it
+work before; now it is time to delete that.  Let's see if the original package
+is working for you!
+
+The package's home has moved to   https://github.com/kaste/Compare-Side-By-Side
+
+☝️
