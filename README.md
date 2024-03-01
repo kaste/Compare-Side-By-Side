@@ -1,7 +1,6 @@
 Compare Side-By-Side
 ================
-This package adds a simple side-by-side comparison tool to Sublime Text.
-Here is us on [Package Control](https://packagecontrol.io/packages/Compare%20Side-By-Side) and here on [GitHub](https://github.com/kaste/Compare-Side-By-Side/).
+This package adds a simple side-by-side comparison tool to Sublime Text. Here is us on [Package Control](https://packagecontrol.io/packages/Compare%20Side-By-Side) and here on [GitHub](https://github.com/kaste/Compare-Side-By-Side/).
 
 Features
 ---
