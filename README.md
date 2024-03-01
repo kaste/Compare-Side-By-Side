@@ -31,9 +31,14 @@ Usage Options
   
 Configuration
 ---
-  - Highlight colours and other options can be configured in SBSCompare.sublime-settings
-  - Hotkeys can be changed in the included `Default (PLATFORM).sublime-keys` files
-  - To access: *Preferences -> Package Settings -> Compare Side-By-Side*
+  - The standard diff scopes/colors are used, these are
+    `diff.inserted.sbs-compare`, `diff.inserted.char.sbs-compare`,
+    `diff.deleted.sbs-compare`, `diff.deleted.char.sbs-compare`.
+    Note that I just added the suffix ".sbs-compare" to them.
+    You can change the colors in your color scheme (ctrl+shift+P,
+    "UI: Customize Color Scheme").
+  - Other options can be configured in SBSCompare.sublime-settings
+    To access: *Preferences -> Package Settings -> Compare Side-By-Side*
 
 License & Contributing
 ---
