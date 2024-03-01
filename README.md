@@ -1,6 +1,9 @@
 Compare Side-By-Side
 ================
-This package adds a simple side-by-side comparison tool to Sublime Text. Here is us on [Package Control](https://packagecontrol.io/packages/Compare%20Side-By-Side) and here on [GitHub](https://github.com/kaste/Compare-Side-By-Side/).
+
+This package adds a simple side-by-side comparison tool to Sublime Text.
+Here is us on [Package Control](https://packagecontrol.io/packages/Compare%20Side-By-Side) and
+here on [GitHub](https://github.com/kaste/Compare-Side-By-Side/).
 
 Features
 ---
@@ -14,7 +17,8 @@ Features
 
 Installation Options
 ---
-  - Search for and install using [Package Control](https://sublime.wbond.net/installation) (ctrl+shift+P, "Install Package")
+  - Search for and install using [Package Control](https://sublime.wbond.net/installation)
+    (ctrl+shift+P, "Install Package")
   - Clone or extract this repo to a new folder in your Sublime 'Packages' folder  
     (*Preferences -> Browse Packages*)
 
