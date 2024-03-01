@@ -3,5 +3,7 @@
 	{ "caption": "Compare with...", "command": "sbs_compare" },
 	{ "caption": "Mark selection for comparison", "command": "sbs_mark_sel" },
 	{ "caption": "Compare selection", "command": "sbs_compare", "args": { "compare_selections": true } },
+	{ "caption": "Previous modification", "command": "sbs_prev_diff" },
+	{ "caption": "Next modification", "command": "sbs_next_diff" },
 	{ "caption": "-" }
 ]

@@ -665,10 +665,16 @@ def sbs_scroll_to( view, prev=False ):
 	view.window().show_quick_panel( [ msg ], None )		
 					
 class sbs_prev_diff( sublime_plugin.TextCommand ):
+	def is_visible(self):
+	    return self.view.settings().get("is_sbs_compare", False)
+
 	def run( self, edit, string='' ):
 		sbs_scroll_to( self.view, prev=True )
 					
 class sbs_next_diff( sublime_plugin.TextCommand ):
+	def is_visible(self):
+	    return self.view.settings().get("is_sbs_compare", False)
+
 	def run( self, edit, string='' ):
 		sbs_scroll_to( self.view )
 
