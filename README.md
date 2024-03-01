@@ -1,6 +1,6 @@
 Compare Side-By-Side
 ================
-This package adds a simple side-by-side comparison tool to Sublime Text.
+The [Compare Side-By-Side](https://packagecontrol.io/packages/Compare%20Side-By-Side) package adds a simple side-by-side comparison tool to Sublime Text.
 
 Features
 ---
