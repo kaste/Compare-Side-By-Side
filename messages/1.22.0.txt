@@ -1,0 +1,23 @@
+Compare Side-by-Side 1.22.0
+---------------------------
+
+I got to notice that the plugin did old tricks with the installed color schemes.
+These were not elegant nor fail-proof.  And now they're gone.
+
+This means the colors you see the next time are different from what you're
+used to see.  But hey, we now use the standard colors from Sublime Text for
+diffs.
+
+Hence, you can change the colors in your color scheme (ctrl+shift+P,
+"UI: Customize Color Scheme") as it should be and not in the settings of
+this plugin anymore.
+
+The following scopes/colors are used:
+
+`diff.inserted.sbs-compare`, `diff.inserted.char.sbs-compare`,
+`diff.deleted.sbs-compare`, `diff.deleted.char.sbs-compare`.
+
+Note that I added the suffix ".sbs-compare".  That means that you can either
+change the scope e.g. `diff.inserted` to affect all diff views in Sublime Text
+or target `diff.inserted.sbs-compare` specifically to only select "our" views.
+
