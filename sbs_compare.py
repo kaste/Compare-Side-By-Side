@@ -9,39 +9,6 @@ import sublime
 import sublime_plugin
 
 
-def plugin_loaded():
-	# creating these files before they're needed avoids some weird issues
-	# where sublime insists the file does't exist, when it definitely does
-
-	folder = os.path.join( sublime.packages_path(), 'User' )
-	if not os.path.exists( folder ):
-		os.makedirs( folder )
-	
-	with open( os.path.join( folder, 'SBSCompareTheme.hidden-tmTheme' ), 'w', encoding='utf-8' ) as f:
-		f.write( '' )
-
-	with open( os.path.join( folder, 'SBSCompareScheme.hidden-color-scheme' ), 'w', encoding='utf-8' ) as f:
-		f.write( '' )
-
-	delete_old_non_hidden_files()
-
-def delete_old_non_hidden_files():
-	# Deletes the old previous non hidden files preventing to show them up
-	# in Preferences -> Color Scheme... selection dialog. (See PR #53)
-	# Also, if those files were malformed (0 bytes, as a result of the
-	# bug fixed with PR #55) opening that dialog threw this error message:
-	# 'Error loading colour scheme Packages/User/SBSCompareTheme.tmTheme: Bad XML' 
-
-	folder = os.path.join( sublime.packages_path(), 'User' )
-
-	filePath = os.path.join( folder, 'SBSCompareTheme.tmTheme' )
-	if os.path.exists(filePath):
-		os.remove(filePath)
-
-	filePath = os.path.join( folder, 'SBSCompareScheme.sublime-color-scheme' )
-	if os.path.exists(filePath):
-		os.remove(filePath)
-
 def sbs_settings():
 	return sublime.load_settings( 'SBSCompare.sublime-settings' )
 	
@@ -149,114 +116,6 @@ class sbs_compare_files( sublime_plugin.ApplicationCommand ):
 		window.run_command( 'sbs_compare' )
 
 class sbs_compare( sublime_plugin.TextCommand ):
-	def generate_colour_scheme( self, view, generate=True ):
-		# make sure we have hex AND we're >= ST3 (load_resource doesn't work in ST2)	
-		colour_removed = sbs_settings().get( 'remove_colour', 'invalid.illegal' )
-		colour_added = sbs_settings().get( 'add_colour', 'string' )
-		colour_modified_deletion = sbs_settings().get( 'modified_colour_deletion', 'support.class' )
-		colour_modified_addition = sbs_settings().get( 'modified_colour_addition', 'support.class' )
-		colour_unmodified_deletion = sbs_settings().get( 'unmodified_colour_deletion', 'invalid.illegal' )
-		colour_unmodified_addition = sbs_settings().get( 'unmodified_colour_addition', 'string' )
-		colour_text = sbs_settings().get( 'text_colour', '' )
-		
-		notHex = False
-		for col in [ colour_removed, colour_added, colour_modified_deletion, colour_modified_addition, colour_unmodified_deletion, colour_unmodified_addition ]:
-			if not '#' in col:
-				notHex = True
-		
-		if int( sublime.version() ) < 3000 or notHex:
-			return { 'removed': colour_removed, 'added': colour_added, 'modified_deletion': colour_modified_deletion, 'modified_addition': colour_modified_addition, 'unmodified_deletion': colour_unmodified_deletion, 'unmodified_addition': colour_unmodified_addition }
-		
-		# generate theme strings
-		colourStrings = {}
-		colourHexes = {}
-		for col in [ [ 'removed', colour_removed ], [ 'added', colour_added ], [ 'modified_deletion', colour_modified_deletion ], [ 'modified_addition', colour_modified_addition ], [ 'unmodified_deletion', colour_unmodified_deletion ], [ 'unmodified_addition', colour_unmodified_addition ] ]:
-			colourStrings[ col[0] ] = 'comparison.' + col[0]
-			colourHexes[ col[0] ] = col[1]
-
-		# generate modified theme
-		if generate:
-			# load current scheme
-			current_scheme = self.get_current_color_scheme( view )
-			try:
-				scheme = sublime.load_resource( current_scheme )
-			except:
-				# sometimes load_resource can fail (seemingly on OSX when upgrading from ST2->ST3)
-				# manually re-selecting the colour scheme once should fix this for good (see issue #31)
-				sublime.message_dialog( 'Could not load colour scheme.\nFalling back to a blank colour scheme.\n\nTo fix this, please manually re-select your colour scheme in\n\tPreferences > Color Scheme\n\nThis should not happen again once action has been taken.\nSorry for the inconvenience.' )
-				scheme = '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>settings</key><array></array></dict></plist>'
-
-			# determine if scheme is using the new .sublime-color-scheme json format
-			scheme_json = False
-			try:
-				scheme = sublime.decode_value( scheme )
-				scheme_json = True
-			except:
-				scheme_json = False
-
-			# create format specific data
-			if scheme_json:
-				for name in colourStrings:
-					string = colourStrings[name]
-					chex = colourHexes[name]
-					scheme['rules'].append( { "name": name, "scope": string, "background": chex, "foreground": colour_text } )
-
-				data = json.dumps( scheme )
-			else:
-				xml = ''
-				xml_tmpl = '<dict><key>name</key><string>{}</string><key>scope</key><string>{}</string><key>settings</key><dict><key>background</key><string>{}</string><key>foreground</key><string>{}</string></dict></dict>'
-				dropzone = scheme.rfind( '</array>' )
-
-				# loop through colours and generate their xml
-				for name in colourStrings:
-					string = colourStrings[name]
-					chex = colourHexes[name]
-					xml += xml_tmpl.format( 'Comparison ' + name, string, chex, colour_text )
-
-				# combiiiiiiiiiiiiine
-				data = scheme[:dropzone] + xml + scheme[dropzone:]
-			
-			# determine theme filename
-			# relative for settings, absolute for writing to file
-			# replacing slashes for relative path necessary on windows
-			# completely separate filenames are necessary to avoid json erroneously taking precedence
-			theme_name = 'SBSCompareTheme.hidden-tmTheme'
-			if scheme_json:
-				theme_name = 'SBSCompareScheme.hidden-color-scheme'
-	
-			abs_theme_file = os.path.join( sublime.packages_path(), 'User', theme_name )
-			rel_theme_file = os.path.join( os.path.basename( sublime.packages_path() ), 'User', theme_name )
-			rel_theme_file = rel_theme_file.replace( '\\', '/' )
-			
-			# save new theme
-			try:
-				with open( abs_theme_file, 'w', encoding='utf-8' ) as f:
-					f.write( data )
-			except:
-				sublime.message_dialog( 'Could not write theme file.\nPlease ensure that your Sublime config directory is writeable and restart Sublime.\n\nFull path:\n' + abs_theme_file )
-
-			# save filename for later use (if we rerun this without regenerating)
-			self.last_theme_file = rel_theme_file
-		
-		# set view settings to use new theme
-		view.settings().set( 'color_scheme', self.last_theme_file )
-		return colourStrings
-
-	def get_current_color_scheme( self, view ):
-		current_scheme = view.settings().get( 'color_scheme' )  # no 'u' >:(
-
-		packages_path = os.path.basename( sublime.packages_path() )
-
-		# The default 'color_scheme' setting only has the file name
-		# and it's inside the 'Color Scheme - Default' package.
-		if not current_scheme.startswith(packages_path + '/'):
-			rel_current_scheme_file = os.path.join( packages_path, 'Color Scheme - Default', current_scheme )
-			rel_current_scheme_file = rel_current_scheme_file.replace( '\\', '/' )
-
-			current_scheme = rel_current_scheme_file
-
-		return current_scheme
-
 	def get_view_contents( self, view ):
 		selection = sublime.Region( 0, view.size() )
 		content = view.substr( selection )
@@ -296,9 +155,9 @@ class sbs_compare( sublime_plugin.TextCommand ):
 			region = sublime.Region( lineStart, lineEnd )
 			regionList.append( region )
 			
-		colour = self.colours['removed']
+		colour ="diff.deleted.sbs-compare"
 		if col == 'B':
-			colour = self.colours['added']
+			colour ="diff.inserted.sbs-compare"
 
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_highlighted-' + col, regionList, colour, '', drawType )
@@ -321,12 +180,12 @@ class sbs_compare( sublime_plugin.TextCommand ):
 			lineRegion = sublime.Region( lineStart, lineEnd )
 			lineRegionList.append(lineRegion)
 		
-		colour = self.colours['modified_deletion']
-		colourUnmodified = self.colours['unmodified_deletion']
+		colour = "diff.deleted.char.sbs-compare"
+		colourUnmodified ="diff.deleted.sbs-compare"
 		if col == 'B':
-			colour = self.colours['modified_addition']
-			colourUnmodified = self.colours['unmodified_addition']
-			
+			colour="diff.inserted.char.sbs-compare"
+			colourUnmodified="diff.inserted.sbs-compare"
+
 		drawType = self.get_drawtype()			
 		view.add_regions( 'diff_intraline_unmodified-' + col, lineRegionList, colourUnmodified, '', drawType )
 		view.add_regions( 'diff_intraline-' + col, regionList, colour, '', drawType )
@@ -592,10 +451,6 @@ class sbs_compare( sublime_plugin.TextCommand ):
 			# disable word wrap
 			view1.settings().set( 'word_wrap', 'false' )
 			view2.settings().set( 'word_wrap', 'false' )
-			
-			# generate and set colour scheme
-			self.colours = self.generate_colour_scheme( view1 )
-			self.generate_colour_scheme( view2, generate=False )
 			
 			# run diff
 			self.compare_views( view1, view2 )
