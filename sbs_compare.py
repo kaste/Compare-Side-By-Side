@@ -335,7 +335,18 @@ class sbs_compare( sublime_plugin.TextCommand ):
 			sublime.message_dialog( intraDiff + str( len( highlightA ) ) + ' lines removed, ' + str( len( highlightB ) ) + ' lines added\n' + str( numDiffs ) + ' line differences total' )
 
 		
-	def run( self, edit, with_active = False, group = -1, index = -1, compare_selections = False ):		
+	def is_enabled( self, with_active = False, group = -1, index = -1, compare_selections = False ):
+		if compare_selections:
+			if len(self.view.sel()) == 2:
+				return all(map(bool, self.view.sel()))
+			if all(map(bool, sbs_markedSelection)):
+				return True
+			if sbs_markedSelection[1] and len(self.view.sel()) == 1 and bool(self.view.sel()[0]):
+				return True
+			return False
+		return True
+
+	def run( self, edit, with_active = False, group = -1, index = -1, compare_selections = False ):
 		global sbs_markedSelection, sbs_files
 		
 		active_view = self.view
@@ -518,18 +529,17 @@ class sbs_compare( sublime_plugin.TextCommand ):
 			compare_from_views( view1, view2 )			
 			del sbs_files[:]
 		elif compare_selections == True:
-			selA = sbs_markedSelection[0]
-			selB = sbs_markedSelection[1]
-			
 			sel = active_view.sel()
 			
-			selNum = 0
-			for selection in sel:
-				selNum += 1
-			
-			if selNum == 2:
+			if len(sel) == 2:
 				selA = active_view.substr( sel[0] )
 				selB = active_view.substr( sel[1] )
+			else:
+				selA = sbs_markedSelection[0]
+				selB = sbs_markedSelection[1]
+				if not selA:
+					selA, selB = selB, active_view.substr( sel[0] )
+				sbs_markedSelection = [ '', '' ]
 			
 			syntax = active_view.settings().get( 'syntax' )
 			create_comparison( selA, selB, syntax, 'selection A', 'selection B' )

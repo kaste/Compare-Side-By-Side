@@ -28,7 +28,7 @@ Usage Options
   - Right click somewhere in the active view and select "Compare with..."
   - Right click on a tab and select "Compare with active tab"
   - Highlight text, right click -> "Mark selection for comparison"
-   - Mark a second selection, then right click -> "Compare selections"
+    Mark a second selection, then right click -> "Compare selections"
   - Create two selections by holding CTRL, then "Compare selections"
   - From the command line: [see README_COMMANDS.md](README_COMMANDS.md)
   - Jump to next: `alt+n`, jump to previous: `alt+p`
