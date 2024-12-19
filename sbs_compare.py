@@ -125,15 +125,15 @@ def get_view_contents(view):
     return view.substr(sublime.Region(0, view.size()))
 
 
-class sbs_compare(sublime_plugin.TextCommand):
-    def get_drawtype(self):
-        drawType = (
-            sublime.DRAW_OUTLINED
-            if sbs_settings().get('outlines_only', False)
-            else sublime.DRAW_NO_OUTLINE
-        )
-        return drawType
+def get_drawtype():
+    return (
+        sublime.DRAW_OUTLINED
+        if sbs_settings().get('outlines_only', False)
+        else sublime.DRAW_NO_OUTLINE
+    )
 
+
+class sbs_compare(sublime_plugin.TextCommand):
     def highlight_lines(self, view, lines, sublines, col):
         # full line diffs
         regionList = []
@@ -159,7 +159,7 @@ class sbs_compare(sublime_plugin.TextCommand):
         if col == 'B':
             colour = "diff.inserted.sbs-compare"
 
-        drawType = self.get_drawtype()
+        drawType = get_drawtype()
         view.add_regions('diff_highlighted-' + col, regionList, colour, '', drawType)
         view.settings().set('sbs_markers', markers)
 
@@ -186,7 +186,7 @@ class sbs_compare(sublime_plugin.TextCommand):
             colour = "diff.inserted.char.sbs-compare"
             colourUnmodified = "diff.inserted.sbs-compare"
 
-        drawType = self.get_drawtype()
+        drawType = get_drawtype()
         view.add_regions(
             'diff_intraline_unmodified-' + col,
             lineRegionList,
