@@ -1,5 +1,3 @@
-# coding: utf8
-
 import os
 import re
 import difflib
