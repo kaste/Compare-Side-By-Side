@@ -121,12 +121,11 @@ class sbs_compare_files(sublime_plugin.ApplicationCommand):
         window.run_command('sbs_compare')
 
 
-class sbs_compare(sublime_plugin.TextCommand):
-    def get_view_contents(self, view):
-        selection = sublime.Region(0, view.size())
-        content = view.substr(selection)
-        return content
+def get_view_contents(view):
+    return view.substr(sublime.Region(0, view.size()))
 
+
+class sbs_compare(sublime_plugin.TextCommand):
     def get_drawtype(self):
         drawType = (
             sublime.DRAW_OUTLINED
@@ -198,8 +197,8 @@ class sbs_compare(sublime_plugin.TextCommand):
         view.add_regions('diff_intraline-' + col, regionList, colour, '', drawType)
 
     def compare_views(self, view1, view2):
-        view1_contents = self.get_view_contents(view1)
-        view2_contents = self.get_view_contents(view2)
+        view1_contents = get_view_contents(view1)
+        view2_contents = get_view_contents(view2)
 
         linesA = view1_contents.splitlines(False)
         linesB = view2_contents.splitlines(False)
@@ -525,8 +524,8 @@ class sbs_compare(sublime_plugin.TextCommand):
         def on_click(index):
             if index > -1:
                 # get original views' data
-                view1_contents = self.get_view_contents(active_view)
-                view2_contents = self.get_view_contents(openTabs[index][1])
+                view1_contents = get_view_contents(active_view)
+                view2_contents = get_view_contents(openTabs[index][1])
 
                 syntax = active_view.settings().get('syntax')
 
@@ -538,8 +537,8 @@ class sbs_compare(sublime_plugin.TextCommand):
             if view1.is_loading() or view2.is_loading():
                 sublime.set_timeout(lambda: compare_from_views(view1, view2), 10)
             else:
-                view1_contents = self.get_view_contents(view1)
-                view2_contents = self.get_view_contents(view2)
+                view1_contents = get_view_contents(view1)
+                view2_contents = get_view_contents(view2)
                 syntax = view1.settings().get('syntax')
 
                 view1.close()
