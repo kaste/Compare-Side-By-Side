@@ -127,11 +127,6 @@ class sbs_compare(sublime_plugin.TextCommand):
         content = view.substr(selection)
         return content
 
-    def close_view(self, view):
-        parent = view.window()
-        parent.focus_view(view)
-        parent.run_command("close_file")
-
     def get_drawtype(self):
         drawType = (
             sublime.DRAW_OUTLINED
@@ -547,8 +542,8 @@ class sbs_compare(sublime_plugin.TextCommand):
                 view2_contents = self.get_view_contents(view2)
                 syntax = view1.settings().get('syntax')
 
-                self.close_view(view1)
-                self.close_view(view2)
+                view1.close()
+                view2.close()
 
                 create_comparison(view1_contents, view2_contents, syntax, file1, file2)
 
