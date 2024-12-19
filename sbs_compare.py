@@ -66,13 +66,6 @@ class SbsLayoutPreserver(sublime_plugin.EventListener):
                     sublime.active_window().run_command('new_window')
                     win = sublime.active_window()
 
-                    # attempt to restore sidebar and menu visibility on ST2
-                    if int(sublime.version()) < 3000:
-                        if sbs_settings().get('hide_sidebar', False):
-                            win.run_command('toggle_side_bar')
-                        if sbs_settings().get('hide_menu', False):
-                            win.run_command('toggle_menu')
-
                     # reopen last file
                     if last_file is not None:
                         win.open_file(last_file)
@@ -142,11 +135,11 @@ class sbs_compare(sublime_plugin.TextCommand):
         parent.run_command("close_file")
 
     def get_drawtype(self):
-        # fill highlighting (DRAW_NO_OUTLINE) only exists on ST3+
-        drawType = sublime.DRAW_OUTLINED
-        if int(sublime.version()) >= 3000:
-            if not sbs_settings().get('outlines_only', False):
-                drawType = sublime.DRAW_NO_OUTLINE
+        drawType = (
+            sublime.DRAW_OUTLINED
+            if sbs_settings().get('outlines_only', False)
+            else sublime.DRAW_NO_OUTLINE
+        )
         return drawType
 
     def highlight_lines(self, view, lines, sublines, col):
@@ -419,22 +412,16 @@ class sbs_compare(sublime_plugin.TextCommand):
                 }
             )
 
-            if int(sublime.version()) >= 3000:
-                if sbs_settings().get('hide_sidebar', False):
-                    new_window.set_sidebar_visible(False)
-                if sbs_settings().get('hide_menu', False):
-                    new_window.set_menu_visible(False)
-                if sbs_settings().get('hide_minimap', False):
-                    new_window.set_minimap_visible(False)
-                if sbs_settings().get('hide_status_bar', False):
-                    new_window.set_status_bar_visible(False)
-                if sbs_settings().get('hide_tabs', False):
-                    new_window.set_tabs_visible(False)
-            else:
-                if sbs_settings().get('hide_sidebar', False):
-                    new_window.run_command('toggle_side_bar')
-                if sbs_settings().get('hide_menu', False):
-                    new_window.run_command('toggle_menu')
+            if sbs_settings().get('hide_sidebar', False):
+                new_window.set_sidebar_visible(False)
+            if sbs_settings().get('hide_menu', False):
+                new_window.set_menu_visible(False)
+            if sbs_settings().get('hide_minimap', False):
+                new_window.set_minimap_visible(False)
+            if sbs_settings().get('hide_status_bar', False):
+                new_window.set_status_bar_visible(False)
+            if sbs_settings().get('hide_tabs', False):
+                new_window.set_tabs_visible(False)
 
             # view names
             view_prefix = sbs_settings().get('display_prefix', '')
@@ -465,9 +452,7 @@ class sbs_compare(sublime_plugin.TextCommand):
                     dirname1 = dirname1[plen:]
                     dirname2 = dirname2[plen:]
 
-                separator = ' - '
-                if int(sublime.version()) >= 3000:
-                    separator = ' — '
+                separator = ' — '
                 view1_name = name1base + separator + dirname1
                 view2_name = name2base + separator + dirname2
 
