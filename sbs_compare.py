@@ -38,7 +38,9 @@ def sbs_settings():
 class sbs_replace_view_contents(sublime_plugin.TextCommand):
     def run(self, edit, text):
         view = self.view
+        view.set_read_only(False)
         view.replace(edit, sublime.Region(0, view.size()), text)
+        view.set_read_only(True)
 
 
 class SbsLayoutPreserver(sublime_plugin.EventListener):
@@ -254,7 +256,14 @@ class sbs_compare(sublime_plugin.TextCommand):
             self.compute_diff(view1_contents, view2_contents)
 
         view1.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferA)})
+        view1.sel().clear()
+        view1.sel().add(sublime.Region(0))
+        view1.show(0)
+
         view2.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferB)})
+        view2.sel().clear()
+        view2.sel().add(sublime.Region(0))
+        view2.show(0)
 
         self.highlight_lines(view1, highlightA, 'A')
         self.highlight_lines(view2, highlightB, 'B')
@@ -407,13 +416,9 @@ class sbs_compare(sublime_plugin.TextCommand):
             view_prefix = sbs_settings().get('display_prefix', '')
             view2_name = name2_override
 
-            view1_name = 'untitled'
-            if active_view.file_name():
-                view1_name = active_view.file_name()
-            elif active_view.name():
-                view1_name = active_view.name()
-            if name1_override is not False:
-                view1_name = name1_override
+            view1_name = (
+                name1_override or active_view.file_name() or active_view.name() or 'untitled'
+            )
 
             name1base = os.path.basename(view1_name)
             name2base = os.path.basename(view2_name)
@@ -447,64 +452,29 @@ class sbs_compare(sublime_plugin.TextCommand):
             view2_name += ' (other)'
 
             # view 1
-            new_window.run_command('new_file')
-            new_window.run_command('sbs_replace_view_contents', {'text': view1_contents})
-            new_window.active_view().set_syntax_file(view1_syntax)
-            new_window.active_view().set_name(view_prefix + view1_name)
-
-            new_window.active_view().set_scratch(True)
-            view1 = new_window.active_view()
+            view1 = new_window.new_file(syntax=view1_syntax)
+            view1.set_name(view_prefix + view1_name)
+            view1.set_scratch(True)
+            view1.settings().set("is_sbs_compare", True)
+            view1.settings().set('word_wrap', 'false')
+            if sbs_settings().get('read_only', False):
+                view1.set_read_only(True)
 
             # view 2
-            new_window.run_command('new_file')
-            new_window.run_command('sbs_replace_view_contents', {'text': view2_contents})
-            new_window.active_view().set_syntax_file(view2_syntax)
-            new_window.active_view().set_name(view_prefix + view2_name)
-
-            new_window.active_view().set_scratch(True)
-            view2 = new_window.active_view()
+            view2 = new_window.new_file(syntax=view2_syntax)
+            view2.set_name(view_prefix + view2_name)
+            view2.set_scratch(True)
+            view2.settings().set("is_sbs_compare", True)
+            view2.settings().set('word_wrap', 'false')
+            if sbs_settings().get('read_only', False):
+                view2.set_read_only(True)
 
             # place views into their corresponding group
             new_window.set_view_index(view1, 0, 0)
             new_window.set_view_index(view2, 1, 0)
 
-            # keep track of these views
-            view1.settings().set("is_sbs_compare", True)
-            view2.settings().set("is_sbs_compare", True)
-
-            # disable word wrap
-            view1.settings().set('word_wrap', 'false')
-            view2.settings().set('word_wrap', 'false')
-
-            # run diff
             self.compare_views(view1, view2, view1_contents, view2_contents)
-
-            # make readonly
-            new_window.focus_view(view1)
-            if sbs_settings().get('read_only', False):
-                new_window.active_view().set_read_only(True)
-
-            new_window.focus_view(view2)
-            if sbs_settings().get('read_only', False):
-                new_window.active_view().set_read_only(True)
-
-            # activate scroll syncer
             ViewScrollSyncer(new_window, [view1, view2])
-
-            # move views to top left
-            view1.set_viewport_position((0, 0), False)
-            view2.set_viewport_position((0, 0), False)
-
-            # move cursors to top left
-            origin = view.text_point(0, 0)
-
-            view1.sel().clear()
-            view1.sel().add(sublime.Region(origin))
-            view1.show(origin)
-
-            view2.sel().clear()
-            view2.sel().add(sublime.Region(origin))
-            view2.show(origin)
 
             # focus first view
             new_window.focus_view(view1)
