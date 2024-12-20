@@ -382,12 +382,12 @@ def compare_views(
     bufferA, bufferB, highlightA, highlightB, found_intraline_changes = \
         compute_diff(view1_contents, view2_contents)
 
-    view1.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferA)})
+    view1.run_command('sbs_replace_view_contents', {'text': bufferA})
     view1.sel().clear()
     view1.sel().add(sublime.Region(0))
     view1.show(0)
 
-    view2.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferB)})
+    view2.run_command('sbs_replace_view_contents', {'text': bufferB})
     view2.sel().clear()
     view2.sel().add(sublime.Region(0))
     view2.show(0)
@@ -417,7 +417,7 @@ def compare_views(
 
 def compute_diff(
     view1_contents: str, view2_contents: str
-) -> tuple[list[str], list[str], list[int], list[int], list[tuple[int, str, str]]]:
+) -> tuple[str, str, list[int], list[int], list[tuple[int, str, str]]]:
     linesA = deque(view1_contents.splitlines(False))
     linesB = deque(view2_contents.splitlines(False))
 
@@ -483,7 +483,7 @@ def compute_diff(
 
         open_intraline_block = code == "-" or (code == "?" and prev_line.startswith("-"))
 
-    return bufferA, bufferB, highlightA, highlightB, found_intraline_changes
+    return "\n".join(bufferA), "\n".join(bufferB), highlightA, highlightB, found_intraline_changes
 
 
 def highlight_lines(view, lines, col):
