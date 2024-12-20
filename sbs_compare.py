@@ -100,7 +100,7 @@ class sbs_compare_files(sublime_plugin.ApplicationCommand):
     def run(self, A=None, B=None):
         global sbs_files
 
-        if A == None or B == None:
+        if A is None or B is None:
             print('Compare Error: file(s) not specified')
             return
 
@@ -423,7 +423,7 @@ class sbs_compare(sublime_plugin.TextCommand):
                 view1_name = active_view.file_name()
             elif active_view.name():
                 view1_name = active_view.name()
-            if name1_override != False:
+            if name1_override is not False:
                 view1_name = name1_override
 
             name1base = os.path.basename(view1_name)
@@ -554,7 +554,7 @@ class sbs_compare(sublime_plugin.TextCommand):
 
             compare_from_views(view1, view2)
             del sbs_files[:]
-        elif compare_selections == True:
+        elif compare_selections is True:
             sel = active_view.sel()
 
             if len(sel) == 2:
@@ -572,7 +572,7 @@ class sbs_compare(sublime_plugin.TextCommand):
         elif len(openTabs) == 1:
             on_click(0)
         else:
-            if with_active == True:
+            if with_active is True:
                 active_group, active_group_index = active_window.get_view_index(
                     active_view
                 )
