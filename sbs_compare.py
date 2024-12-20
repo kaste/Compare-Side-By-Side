@@ -1,10 +1,31 @@
 from __future__ import annotations
 import difflib
+from itertools import chain, tee
 import os
 import re
 
 import sublime
 import sublime_plugin
+
+from typing import Iterable, TypeVar
+T = TypeVar("T")
+
+
+# (c) @rhettinger on GitHub
+def triplewise(iterable: Iterable[T]) -> Iterable[tuple[T, T, T]]:
+    """Return overlapping triplets from *iterable*.
+
+    >>> list(triplewise('ABCDE'))
+    [('A', 'B', 'C'), ('B', 'C', 'D'), ('C', 'D', 'E')]
+
+    """
+    # This deviates from the itertools documentation reciple - see
+    # https://github.com/more-itertools/more-itertools/issues/889
+    t1, t2, t3 = tee(iterable, 3)
+    next(t3, None)
+    next(t3, None)
+    next(t2, None)
+    return zip(t1, t2, t3)
 
 
 def sbs_settings():
@@ -229,16 +250,10 @@ class sbs_compare(sublime_plugin.TextCommand):
         diff = difflib.ndiff(diffLinesA, diffLinesB, charjunk=None)
         line_a = 0
         line_b = 0
-        it = iter(diff)
-        line = ""
-        next_line = next(it, "")
         found_intraline_changes: list[tuple[int, str, str]] = []
         open_intraline_block = False
-        while next_line:
-            prev_line = line
-            line = next_line
+        for prev_line, line, next_line in triplewise(chain([""], diff, [""])):
             code = line[:1]
-            next_line = next(it, "")
             if code == " ":
                 bufferA.append(linesA[line_a])
                 bufferB.append(linesB[line_b])
