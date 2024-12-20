@@ -542,37 +542,13 @@ def compute_intraline_differences(
 
 
 def sub_highlight_lines(view, lines, col):
-    # intra-line diffs
-    regionList = []
-    lineRegionList = []
-    for diff in lines:
-        lineNum = diff[0]
-        start = view.text_point(lineNum, diff[1])
-        end = view.text_point(lineNum, diff[2])
-        lineStart = view.text_point(lineNum, 0)
-        lineEnd = view.text_point(lineNum + 1, -1)
-
-        region = sublime.Region(start, end)
-        regionList.append(region)
-
-        lineRegion = sublime.Region(lineStart, lineEnd)
-        lineRegionList.append(lineRegion)
-
-    colour = "diff.deleted.char.sbs-compare"
-    colourUnmodified = "diff.deleted.sbs-compare"
-    if col == 'B':
-        colour = "diff.inserted.char.sbs-compare"
-        colourUnmodified = "diff.inserted.sbs-compare"
-
+    regionList = [
+        sublime.Region(view.text_point(line, a), view.text_point(line, b))
+        for line, a, b in lines
+    ]
+    color = "diff.inserted.char.sbs-compare" if col == 'B' else "diff.deleted.char.sbs-compare"
     drawType = get_drawtype()
-    view.add_regions(
-        'diff_intraline_unmodified-' + col,
-        lineRegionList,
-        colourUnmodified,
-        '',
-        drawType,
-    )
-    view.add_regions('diff_intraline-' + col, regionList, colour, '', drawType)
+    view.add_regions('diff_intraline-' + col, regionList, color, '', drawType)
 
 
 class ViewScrollSyncer(object):
