@@ -268,17 +268,20 @@ class sbs_compare(sublime_plugin.TextCommand):
         self.highlight_lines(view1, highlightA, 'A')
         self.highlight_lines(view2, highlightB, 'B')
 
+        num_intra = len(found_intraline_changes)
+        num_removals = len(highlightA) - num_intra
+        num_insertions = len(highlightB) - num_intra
+        total = num_intra + num_removals + num_insertions
+        message = (
+            f"{num_intra} intra-line modifications, "
+            f"{num_removals} lines removed, "
+            f"{num_insertions} lines added. "
+            f"{total} line differences in total."
+        )
         if sbs_settings().get('line_count_popup', False):
-            num_intra = len(found_intraline_changes)
-            num_removals = len(highlightA) - num_intra
-            num_insertions = len(highlightB) - num_intra
-            total = num_intra + num_removals + num_insertions
-            sublime.message_dialog(
-                f"{num_intra} intra-line modifications,\n"
-                f"{num_removals} lines removed\n"
-                f"{num_insertions} lines added\n"
-                f"{total} line differences in total"
-            )
+            sublime.message_dialog(message)
+        elif window := view1.window():
+            window.status_message(message)
 
         if sbs_settings().get('enable_intraline', True):
             task = partial(

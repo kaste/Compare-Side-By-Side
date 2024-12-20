@@ -1,6 +1,6 @@
 {
 	// show a popup after comparison counting # of lines added/removed/total
-	"line_count_popup": true,
+	"line_count_popup": false,
 
 
 	// hide the sidebar in comparison output windows
