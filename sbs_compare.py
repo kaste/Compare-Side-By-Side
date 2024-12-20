@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import deque
 import difflib
 from itertools import chain, tee
 import os
@@ -211,8 +212,8 @@ class sbs_compare(sublime_plugin.TextCommand):
         view1_contents = get_view_contents(view1)
         view2_contents = get_view_contents(view2)
 
-        linesA = view1_contents.splitlines(False)
-        linesB = view2_contents.splitlines(False)
+        linesA = deque(view1_contents.splitlines(False))
+        linesB = deque(view2_contents.splitlines(False))
 
         if sbs_settings().has('ignore_pattern'):
             ignore_pattern = sbs_settings().get('ignore_pattern')
@@ -248,28 +249,22 @@ class sbs_compare(sublime_plugin.TextCommand):
         # from the perspective of a "+".  Before a "+" we must have seen a "-"
         # or a "-?".  That is what we encode in `open_intraline_block`.
         diff = difflib.ndiff(diffLinesA, diffLinesB, charjunk=None)
-        line_a = 0
-        line_b = 0
         found_intraline_changes: list[tuple[int, str, str]] = []
         open_intraline_block = False
         for prev_line, line, next_line in triplewise(chain([""], diff, [""])):
             code = line[:1]
             if code == " ":
-                bufferA.append(linesA[line_a])
-                bufferB.append(linesB[line_b])
-                line_a += 1
-                line_b += 1
+                bufferA.append(linesA.popleft())
+                bufferB.append(linesB.popleft())
 
             elif code == "-":
-                bufferA.append(linesA[line_a])
-                line_a += 1
+                bufferA.append(linesA.popleft())
                 highlightA.append(len(bufferA) - 1)
                 if next_line.startswith((" ", "-")):
                     bufferB.append("")
 
             elif code == "+":
-                bufferB.append(linesB[line_b])
-                line_b += 1
+                bufferB.append(linesB.popleft())
                 highlightB.append(len(bufferB) - 1)
                 if open_intraline_block:
                     if highlightB[-1] != highlightA[-1]:
