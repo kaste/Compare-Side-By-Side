@@ -247,9 +247,13 @@ class sbs_compare(sublime_plugin.TextCommand):
 
         return bufferA, bufferB, highlightA, highlightB, found_intraline_changes
 
-    def compare_views(self, view1: sublime.View, view2: sublime.View):
-        view1_contents = get_view_contents(view1)
-        view2_contents = get_view_contents(view2)
+    def compare_views(
+        self,
+        view1: sublime.View,
+        view2: sublime.View,
+        view1_contents: str,
+        view2_contents: str
+    ):
         bufferA, bufferB, highlightA, highlightB, found_intraline_changes = \
             self.compute_diff(view1_contents, view2_contents)
 
@@ -484,7 +488,7 @@ class sbs_compare(sublime_plugin.TextCommand):
             view2.settings().set('word_wrap', 'false')
 
             # run diff
-            self.compare_views(view1, view2)
+            self.compare_views(view1, view2, view1_contents, view2_contents)
 
             # make readonly
             new_window.focus_view(view1)
