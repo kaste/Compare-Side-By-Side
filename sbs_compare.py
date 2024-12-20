@@ -1,6 +1,7 @@
+from __future__ import annotations
+import difflib
 import os
 import re
-import difflib
 
 import sublime
 import sublime_plugin
@@ -185,7 +186,7 @@ class sbs_compare(sublime_plugin.TextCommand):
         )
         view.add_regions('diff_intraline-' + col, regionList, colour, '', drawType)
 
-    def compare_views(self, view1, view2):
+    def compare_views(self, view1: sublime.View, view2: sublime.View):
         view1_contents = get_view_contents(view1)
         view2_contents = get_view_contents(view2)
 
@@ -209,98 +210,65 @@ class sbs_compare(sublime_plugin.TextCommand):
         diffLinesA = view1_contents.splitlines(False)
         diffLinesB = view2_contents.splitlines(False)
 
-        bufferA = []
-        bufferB = []
+        bufferA: list[str] = []
+        bufferB: list[str] = []
 
-        highlightA = []
-        highlightB = []
+        highlightA: list[int] = []
+        highlightB: list[int] = []
 
-        subHighlightA = []
-        subHighlightB = []
+        subHighlightA: list[tuple[int, int, int]] = []
+        subHighlightB: list[tuple[int, int, int]] = []
 
+        # An "intraline" difference is always a '-' line, possibly followed by
+        # '?' line, and immediately followed by a '+' line; the next line after
+        # that '+' might be another '?' line as well, or not.
+        # In short it is a sequence of one of: "-+", "-?+", "-?+?", "-+?". We
+        # don't want to look forward up to four characters, so we look at it
+        # from the perspective of a "+".  Before a "+" we must have seen a "-"
+        # or a "-?".  That is what we encode in `open_intraline_block`.
         diff = difflib.ndiff(diffLinesA, diffLinesB, charjunk=None)
+        line_a = 0
+        line_b = 0
+        it = iter(diff)
+        line = ""
+        next_line = next(it, "")
+        found_intraline_changes: list[tuple[int, str, str]] = []
+        open_intraline_block = False
+        while next_line:
+            prev_line = line
+            line = next_line
+            code = line[:1]
+            next_line = next(it, "")
+            if code == " ":
+                bufferA.append(linesA[line_a])
+                bufferB.append(linesB[line_b])
+                line_a += 1
+                line_b += 1
 
-        hasDiffA = False
-        hasDiffB = False
-        intraLineA = ''
-        intraLineB = ''
-        hasIntraline = False
+            elif code == "-":
+                bufferA.append(linesA[line_a])
+                line_a += 1
+                highlightA.append(len(bufferA) - 1)
+                if next_line.startswith((" ", "-")):
+                    bufferB.append("")
 
-        '''
-        An "intraline" difference is always a '-' line, possibly followed by
-        '?' line, and immediately followed by a '+' line; the next line after
-        that '+' might be another '?' line as well, or not. This is all
-        dependent on whether the new file line (view2's) added, removed, or
-        just changed characters relative to the original. If the new file line
-        has more characters but no other differences, then the diff sequence
-        would be '-', '+', '?'; if the new file has fewer characters but no
-        other differences, the sequence will be '-', '?', '+'; if the new file
-        has other character differences relative to the original, then the
-        sequence will be '-', '?', '+', '?'.
-        '''
+            elif code == "+":
+                bufferB.append(linesB[line_b])
+                line_b += 1
+                highlightB.append(len(bufferB) - 1)
+                if open_intraline_block:
+                    if highlightB[-1] != highlightA[-1]:
+                        print(f"assertion failed: {highlightB[-1]} != {highlightA[-1]}")
+                    found_intraline_changes.append((highlightB[-1], bufferA[-1], bufferB[-1]))
+                else:
+                    bufferA.append("")
 
-        lineNum = 0
-        lineA = 0
-        lineB = 0
-        for line in diff:
-            lineNum += 1
-            code = line[:2]
+            elif code == "?":
+                # There is a cheap intra line diff here, but since we filtered
+                # the view contents, we cannot use it.
+                ...
 
-            if code == '- ':
-                bufferA.append(linesA[lineA])
-                bufferB.append('')
-                highlightA.append(lineNum - 1)
-                intraLineA = linesA[lineA]
-                hasDiffA = True
-                hasDiffB = False
-                hasIntraline = False
-                lineA += 1
-            elif code == '+ ':
-                bufferA.append('')
-                bufferB.append(linesB[lineB])
-                highlightB.append(lineNum - 1)
-                intraLineB = linesB[lineB]
-                hasDiffB = True
-                lineB += 1
-            elif code == '  ':
-                bufferA.append(linesA[lineA])
-                bufferB.append(linesB[lineB])
-                hasDiffA = False
-                hasDiffB = False
-                hasIntraline = False
-                lineA += 1
-                lineB += 1
-            elif code == '? ':
-                lineNum -= 1
-                hasIntraline = True
-            else:
-                lineNum -= 1
-
-            if hasIntraline and hasDiffA and hasDiffB:
-                if sbs_settings().get('enable_intraline', True):
-                    # fixup line alignment
-                    assert bufferA[-1] == ''
-                    assert bufferB[-2] == ''
-                    bufferB[-1] = bufferB.pop()
-                    bufferA.pop()
-                    highlightB[-1] = highlightA[-1]
-                    lineNum -= 1
-                    assert highlightB[-1] == lineNum - 1
-
-                    s = difflib.SequenceMatcher(None, intraLineA, intraLineB)
-                    for tag, i1, i2, j1, j2 in s.get_opcodes():
-                        if tag != 'equal':  # == replace
-                            if sbs_settings().get('intraline_emptyspace', False):
-                                if tag == 'insert':
-                                    i2 += j2 - j1
-                                if tag == 'delete':
-                                    j2 += i2 - i1
-
-                            subHighlightA.append([lineNum - 1, i1, i2])
-                            subHighlightB.append([lineNum - 1, j1, j2])
-                hasDiffA = False
-                hasDiffB = False
-                hasIntraline = False
+            open_intraline_block = code == "-" or (code == "?" and prev_line.startswith("-"))
 
         window = sublime.active_window()
 
@@ -315,24 +283,34 @@ class sbs_compare(sublime_plugin.TextCommand):
         self.highlight_lines(view1, highlightA, 'A')
         self.highlight_lines(view2, highlightB, 'B')
 
-        intraDiff = ''
         if sbs_settings().get('enable_intraline', True):
+            for line_num, left, right in found_intraline_changes:
+                s = difflib.SequenceMatcher(None, left, right)
+                for tag, i1, i2, j1, j2 in s.get_opcodes():
+                    if tag != 'equal':  # == replace
+                        if sbs_settings().get('intraline_emptyspace', False):
+                            if tag == 'insert':
+                                i2 += j2 - j1
+                            if tag == 'delete':
+                                j2 += i2 - i1
+
+                        subHighlightA.append((line_num, i1, i2))
+                        subHighlightB.append((line_num, j1, j2))
+
             self.sub_highlight_lines(view1, subHighlightA, 'A')
             self.sub_highlight_lines(view2, subHighlightB, 'B')
 
-            numIntra = len(subHighlightB)
-            intraDiff = str(numIntra) + ' intra-line modifications\n'
 
         if sbs_settings().get('line_count_popup', False):
-            numDiffs = len(highlightA) + len(highlightB)
+            num_intra = len(found_intraline_changes)
+            num_removals = len(highlightA) - num_intra
+            num_insertions = len(highlightB) - num_intra
+            total = num_intra + num_removals + num_insertions
             sublime.message_dialog(
-                intraDiff
-                + str(len(highlightA))
-                + ' lines removed, '
-                + str(len(highlightB))
-                + ' lines added\n'
-                + str(numDiffs)
-                + ' line differences total'
+                f"{num_intra} intra-line modifications,\n"
+                f"{num_removals} lines removed\n"
+                f"{num_insertions} lines added\n"
+                f"{total} line differences in total"
             )
 
     def is_enabled(
