@@ -35,14 +35,10 @@ def sbs_settings():
     return sublime.load_settings('SBSCompare.sublime-settings')
 
 
-class sbs_erase_view(sublime_plugin.TextCommand):
-    def run(self, edit):
-        self.view.erase(edit, sublime.Region(0, self.view.size()))
-
-
-class sbs_insert_view(sublime_plugin.TextCommand):
-    def run(self, edit, string=''):
-        self.view.insert(edit, self.view.size(), string)
+class sbs_replace_view_contents(sublime_plugin.TextCommand):
+    def run(self, edit, text):
+        view = self.view
+        view.replace(edit, sublime.Region(0, view.size()), text)
 
 
 class SbsLayoutPreserver(sublime_plugin.EventListener):
@@ -257,15 +253,8 @@ class sbs_compare(sublime_plugin.TextCommand):
         bufferA, bufferB, highlightA, highlightB, found_intraline_changes = \
             self.compute_diff(view1_contents, view2_contents)
 
-        window = sublime.active_window()
-
-        window.focus_view(view1)
-        window.run_command('sbs_erase_view')
-        window.run_command('sbs_insert_view', {'string': '\n'.join(bufferA)})
-
-        window.focus_view(view2)
-        window.run_command('sbs_erase_view')
-        window.run_command('sbs_insert_view', {'string': '\n'.join(bufferB)})
+        view1.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferA)})
+        view2.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferB)})
 
         self.highlight_lines(view1, highlightA, 'A')
         self.highlight_lines(view2, highlightB, 'B')
@@ -459,7 +448,7 @@ class sbs_compare(sublime_plugin.TextCommand):
 
             # view 1
             new_window.run_command('new_file')
-            new_window.run_command('sbs_insert_view', {'string': view1_contents})
+            new_window.run_command('sbs_replace_view_contents', {'text': view1_contents})
             new_window.active_view().set_syntax_file(view1_syntax)
             new_window.active_view().set_name(view_prefix + view1_name)
 
@@ -468,7 +457,7 @@ class sbs_compare(sublime_plugin.TextCommand):
 
             # view 2
             new_window.run_command('new_file')
-            new_window.run_command('sbs_insert_view', {'string': view2_contents})
+            new_window.run_command('sbs_replace_view_contents', {'text': view2_contents})
             new_window.active_view().set_syntax_file(view2_syntax)
             new_window.active_view().set_name(view_prefix + view2_name)
 
