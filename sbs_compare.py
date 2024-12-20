@@ -624,31 +624,26 @@ def sbs_scroll_to(view, prev=False):
         return
 
     current_pos = view.sel()[0].begin()
-    for col in ['A', 'B']:
-        regions = view.settings().get('sbs_markers')
+    regions = view.settings().get('sbs_markers')
+    if prev:
+        regions.reverse()
+
+    for highlight in regions:
+        found = False
         if prev:
-            regions.reverse()
+            if highlight < current_pos:
+                found = True
+        else:
+            if highlight > current_pos:
+                found = True
 
-        for highlight in regions:
-            found = False
-            if prev:
-                if highlight < current_pos:
-                    found = True
-            else:
-                if highlight > current_pos:
-                    found = True
+        if found:
+            view.sel().clear()
+            view.sel().add(sublime.Region(highlight))
+            view.show(highlight)
+            return
 
-            if found:
-                view.sel().clear()
-                view.sel().add(sublime.Region(highlight))
-                view.show(highlight)
-
-                # sometimes necessary, better safe than sorry
-                sublime.set_timeout(lambda: view.show(highlight), 10)
-                return
-
-    msg = 'Reached the '
-    msg += 'beginning' if prev else 'end'
+    msg = 'Reached the ' + 'beginning' if prev else 'end'
     view.window().show_quick_panel([msg], None)
 
 
