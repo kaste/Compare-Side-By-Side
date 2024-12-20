@@ -133,23 +133,13 @@ def get_drawtype():
 
 
 class sbs_compare(sublime_plugin.TextCommand):
-    def highlight_lines(self, view, lines, sublines, col):
+    def highlight_lines(self, view, lines, col):
         # full line diffs
         regionList = []
         markers = []
         for lineNum in lines:
             lineStart = view.text_point(lineNum, 0)
             markers.append(lineStart)
-
-            for sub in (sub for sub in sublines if sub[0] == lineNum):
-                subStart = view.text_point(lineNum, sub[1])
-                subEnd = view.text_point(lineNum, sub[2])
-
-                region = sublime.Region(lineStart, subStart)
-                regionList.append(region)
-
-                lineStart = subEnd
-
             lineEnd = view.text_point(lineNum + 1, -1)
             region = sublime.Region(lineStart, lineEnd)
             regionList.append(region)
@@ -322,8 +312,8 @@ class sbs_compare(sublime_plugin.TextCommand):
         window.run_command('sbs_erase_view')
         window.run_command('sbs_insert_view', {'string': '\n'.join(bufferB)})
 
-        self.highlight_lines(view1, highlightA, subHighlightA, 'A')
-        self.highlight_lines(view2, highlightB, subHighlightB, 'B')
+        self.highlight_lines(view1, highlightA, 'A')
+        self.highlight_lines(view2, highlightB, 'B')
 
         intraDiff = ''
         if sbs_settings().get('enable_intraline', True):
