@@ -1,9 +1,11 @@
 from __future__ import annotations
 from collections import deque
 import difflib
+from functools import partial
 from itertools import chain, tee
 import os
 import re
+import threading
 
 import sublime
 import sublime_plugin
@@ -175,43 +177,9 @@ class sbs_compare(sublime_plugin.TextCommand):
         view.add_regions('diff_highlighted-' + col, regionList, colour, '', drawType)
         view.settings().set('sbs_markers', markers)
 
-    def sub_highlight_lines(self, view, lines, col):
-        # intra-line diffs
-        regionList = []
-        lineRegionList = []
-        for diff in lines:
-            lineNum = diff[0]
-            start = view.text_point(lineNum, diff[1])
-            end = view.text_point(lineNum, diff[2])
-            lineStart = view.text_point(lineNum, 0)
-            lineEnd = view.text_point(lineNum + 1, -1)
-
-            region = sublime.Region(start, end)
-            regionList.append(region)
-
-            lineRegion = sublime.Region(lineStart, lineEnd)
-            lineRegionList.append(lineRegion)
-
-        colour = "diff.deleted.char.sbs-compare"
-        colourUnmodified = "diff.deleted.sbs-compare"
-        if col == 'B':
-            colour = "diff.inserted.char.sbs-compare"
-            colourUnmodified = "diff.inserted.sbs-compare"
-
-        drawType = get_drawtype()
-        view.add_regions(
-            'diff_intraline_unmodified-' + col,
-            lineRegionList,
-            colourUnmodified,
-            '',
-            drawType,
-        )
-        view.add_regions('diff_intraline-' + col, regionList, colour, '', drawType)
-
-    def compare_views(self, view1: sublime.View, view2: sublime.View):
-        view1_contents = get_view_contents(view1)
-        view2_contents = get_view_contents(view2)
-
+    def compute_diff(
+        self, view1_contents: str, view2_contents: str
+    ) -> tuple[list[str], list[str], list[int], list[int], list[tuple[int, str, str]]]:
         linesA = deque(view1_contents.splitlines(False))
         linesB = deque(view2_contents.splitlines(False))
 
@@ -237,9 +205,6 @@ class sbs_compare(sublime_plugin.TextCommand):
 
         highlightA: list[int] = []
         highlightB: list[int] = []
-
-        subHighlightA: list[tuple[int, int, int]] = []
-        subHighlightB: list[tuple[int, int, int]] = []
 
         # An "intraline" difference is always a '-' line, possibly followed by
         # '?' line, and immediately followed by a '+' line; the next line after
@@ -280,6 +245,14 @@ class sbs_compare(sublime_plugin.TextCommand):
 
             open_intraline_block = code == "-" or (code == "?" and prev_line.startswith("-"))
 
+        return bufferA, bufferB, highlightA, highlightB, found_intraline_changes
+
+    def compare_views(self, view1: sublime.View, view2: sublime.View):
+        view1_contents = get_view_contents(view1)
+        view2_contents = get_view_contents(view2)
+        bufferA, bufferB, highlightA, highlightB, found_intraline_changes = \
+            self.compute_diff(view1_contents, view2_contents)
+
         window = sublime.active_window()
 
         window.focus_view(view1)
@@ -293,24 +266,6 @@ class sbs_compare(sublime_plugin.TextCommand):
         self.highlight_lines(view1, highlightA, 'A')
         self.highlight_lines(view2, highlightB, 'B')
 
-        if sbs_settings().get('enable_intraline', True):
-            for line_num, left, right in found_intraline_changes:
-                s = difflib.SequenceMatcher(None, left, right)
-                for tag, i1, i2, j1, j2 in s.get_opcodes():
-                    if tag != 'equal':  # == replace
-                        if sbs_settings().get('intraline_emptyspace', False):
-                            if tag == 'insert':
-                                i2 += j2 - j1
-                            if tag == 'delete':
-                                j2 += i2 - i1
-
-                        subHighlightA.append((line_num, i1, i2))
-                        subHighlightB.append((line_num, j1, j2))
-
-            self.sub_highlight_lines(view1, subHighlightA, 'A')
-            self.sub_highlight_lines(view2, subHighlightB, 'B')
-
-
         if sbs_settings().get('line_count_popup', False):
             num_intra = len(found_intraline_changes)
             num_removals = len(highlightA) - num_intra
@@ -322,6 +277,69 @@ class sbs_compare(sublime_plugin.TextCommand):
                 f"{num_insertions} lines added\n"
                 f"{total} line differences in total"
             )
+
+        if sbs_settings().get('enable_intraline', True):
+            task = partial(
+                self.compute_intraline_differences, view1, view2, found_intraline_changes
+            )
+            threading.Thread(target=task).start()
+
+    def compute_intraline_differences(
+        self,
+        view1: sublime.View,
+        view2: sublime.View,
+        found_intraline_changes: list[tuple[int, str, str]]
+    ):
+        subHighlightA: list[tuple[int, int, int]] = []
+        subHighlightB: list[tuple[int, int, int]] = []
+        for line_num, left, right in found_intraline_changes:
+            s = difflib.SequenceMatcher(None, left, right)
+            for tag, i1, i2, j1, j2 in s.get_opcodes():
+                if tag != 'equal':  # == replace
+                    if sbs_settings().get('intraline_emptyspace', False):
+                        if tag == 'insert':
+                            i2 += j2 - j1
+                        if tag == 'delete':
+                            j2 += i2 - i1
+
+                    subHighlightA.append((line_num, i1, i2))
+                    subHighlightB.append((line_num, j1, j2))
+
+        self.sub_highlight_lines(view1, subHighlightA, 'A')
+        self.sub_highlight_lines(view2, subHighlightB, 'B')
+
+    def sub_highlight_lines(self, view, lines, col):
+        # intra-line diffs
+        regionList = []
+        lineRegionList = []
+        for diff in lines:
+            lineNum = diff[0]
+            start = view.text_point(lineNum, diff[1])
+            end = view.text_point(lineNum, diff[2])
+            lineStart = view.text_point(lineNum, 0)
+            lineEnd = view.text_point(lineNum + 1, -1)
+
+            region = sublime.Region(start, end)
+            regionList.append(region)
+
+            lineRegion = sublime.Region(lineStart, lineEnd)
+            lineRegionList.append(lineRegion)
+
+        colour = "diff.deleted.char.sbs-compare"
+        colourUnmodified = "diff.deleted.sbs-compare"
+        if col == 'B':
+            colour = "diff.inserted.char.sbs-compare"
+            colourUnmodified = "diff.inserted.sbs-compare"
+
+        drawType = get_drawtype()
+        view.add_regions(
+            'diff_intraline_unmodified-' + col,
+            lineRegionList,
+            colourUnmodified,
+            '',
+            drawType,
+        )
+        view.add_regions('diff_intraline-' + col, regionList, colour, '', drawType)
 
     def is_enabled(
         self, with_active=False, group=-1, index=-1, compare_selections=False
