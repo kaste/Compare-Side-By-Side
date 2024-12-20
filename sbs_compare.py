@@ -156,137 +156,6 @@ def get_drawtype():
 
 
 class sbs_compare(sublime_plugin.TextCommand):
-    def highlight_lines(self, view, lines, col):
-        # full line diffs
-        regionList = []
-        markers = []
-        for lineNum in lines:
-            lineStart = view.text_point(lineNum, 0)
-            markers.append(lineStart)
-            lineEnd = view.text_point(lineNum + 1, -1)
-            region = sublime.Region(lineStart, lineEnd)
-            regionList.append(region)
-
-        colour = "diff.deleted.sbs-compare"
-        if col == 'B':
-            colour = "diff.inserted.sbs-compare"
-
-        drawType = get_drawtype()
-        view.add_regions('diff_highlighted-' + col, regionList, colour, '', drawType)
-        view.settings().set('sbs_markers', markers)
-
-    def compute_diff(
-        self, view1_contents: str, view2_contents: str
-    ) -> tuple[list[str], list[str], list[int], list[int], list[tuple[int, str, str]]]:
-        linesA = deque(view1_contents.splitlines(False))
-        linesB = deque(view2_contents.splitlines(False))
-
-        if sbs_settings().has('ignore_pattern'):
-            ignore_pattern = sbs_settings().get('ignore_pattern')
-            pattern = re.compile(ignore_pattern, re.MULTILINE)
-            view1_contents = pattern.sub('', view1_contents)
-            view2_contents = pattern.sub('', view2_contents)
-
-        if sbs_settings().get('ignore_whitespace', False):
-            view1_contents = re.sub(r'[ \t]', '', view1_contents)
-            view2_contents = re.sub(r'[ \t]', '', view2_contents)
-
-        if sbs_settings().get('ignore_case', False):
-            view1_contents = view1_contents.lower()
-            view2_contents = view2_contents.lower()
-
-        diffLinesA = view1_contents.splitlines(False)
-        diffLinesB = view2_contents.splitlines(False)
-
-        bufferA: list[str] = []
-        bufferB: list[str] = []
-
-        highlightA: list[int] = []
-        highlightB: list[int] = []
-
-        # An "intraline" difference is always a '-' line, possibly followed by
-        # '?' line, and immediately followed by a '+' line; the next line after
-        # that '+' might be another '?' line as well, or not.
-        # In short it is a sequence of one of: "-+", "-?+", "-?+?", "-+?". We
-        # don't want to look forward up to four characters, so we look at it
-        # from the perspective of a "+".  Before a "+" we must have seen a "-"
-        # or a "-?".  That is what we encode in `open_intraline_block`.
-        diff = difflib.ndiff(diffLinesA, diffLinesB, charjunk=None)
-        found_intraline_changes: list[tuple[int, str, str]] = []
-        open_intraline_block = False
-        for prev_line, line, next_line in triplewise(chain([""], diff, [""])):
-            code = line[:1]
-            if code == " ":
-                bufferA.append(linesA.popleft())
-                bufferB.append(linesB.popleft())
-
-            elif code == "-":
-                bufferA.append(linesA.popleft())
-                highlightA.append(len(bufferA) - 1)
-                if next_line.startswith((" ", "-")):
-                    bufferB.append("")
-
-            elif code == "+":
-                bufferB.append(linesB.popleft())
-                highlightB.append(len(bufferB) - 1)
-                if open_intraline_block:
-                    if highlightB[-1] != highlightA[-1]:
-                        print(f"assertion failed: {highlightB[-1]} != {highlightA[-1]}")
-                    found_intraline_changes.append((highlightB[-1], bufferA[-1], bufferB[-1]))
-                else:
-                    bufferA.append("")
-
-            elif code == "?":
-                # There is a cheap intra line diff here, but since we filtered
-                # the view contents, we cannot use it.
-                ...
-
-            open_intraline_block = code == "-" or (code == "?" and prev_line.startswith("-"))
-
-        return bufferA, bufferB, highlightA, highlightB, found_intraline_changes
-
-    def compare_views(
-        self,
-        view1: sublime.View,
-        view2: sublime.View,
-        view1_contents: str,
-        view2_contents: str
-    ):
-        bufferA, bufferB, highlightA, highlightB, found_intraline_changes = \
-            self.compute_diff(view1_contents, view2_contents)
-
-        view1.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferA)})
-        view1.sel().clear()
-        view1.sel().add(sublime.Region(0))
-        view1.show(0)
-
-        view2.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferB)})
-        view2.sel().clear()
-        view2.sel().add(sublime.Region(0))
-        view2.show(0)
-
-        self.highlight_lines(view1, highlightA, 'A')
-        self.highlight_lines(view2, highlightB, 'B')
-
-        num_intra = len(found_intraline_changes)
-        num_removals = len(highlightA) - num_intra
-        num_insertions = len(highlightB) - num_intra
-        total = num_intra + num_removals + num_insertions
-        message = (
-            f"{num_intra} intra-line modifications, "
-            f"{num_removals} lines removed, "
-            f"{num_insertions} lines added. "
-            f"{total} line differences in total."
-        )
-        if sbs_settings().get('line_count_popup', False):
-            sublime.message_dialog(message)
-        elif window := view1.window():
-            window.status_message(message)
-
-        if sbs_settings().get('enable_intraline', True):
-            task = partial(colorize_intraline, view1, view2, found_intraline_changes)
-            threading.Thread(target=task).start()
-
     def is_enabled(
         self, with_active=False, group=-1, index=-1, compare_selections=False
     ):
@@ -417,7 +286,7 @@ class sbs_compare(sublime_plugin.TextCommand):
             new_window.set_view_index(view1, 0, 0)
             new_window.set_view_index(view2, 1, 0)
 
-            self.compare_views(view1, view2, view1_contents, view2_contents)
+            compare_views(view1, view2, view1_contents, view2_contents)
             ViewScrollSyncer(new_window, [view1, view2])
 
             # focus first view
@@ -505,6 +374,139 @@ class sbs_compare(sublime_plugin.TextCommand):
                 sublime.set_timeout(
                     self.view.window().show_quick_panel(menu_items, on_click)
                 )
+
+
+def compare_views(
+    view1: sublime.View,
+    view2: sublime.View,
+    view1_contents: str,
+    view2_contents: str
+):
+    bufferA, bufferB, highlightA, highlightB, found_intraline_changes = \
+        compute_diff(view1_contents, view2_contents)
+
+    view1.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferA)})
+    view1.sel().clear()
+    view1.sel().add(sublime.Region(0))
+    view1.show(0)
+
+    view2.run_command('sbs_replace_view_contents', {'text': '\n'.join(bufferB)})
+    view2.sel().clear()
+    view2.sel().add(sublime.Region(0))
+    view2.show(0)
+
+    highlight_lines(view1, highlightA, 'A')
+    highlight_lines(view2, highlightB, 'B')
+
+    num_intra = len(found_intraline_changes)
+    num_removals = len(highlightA) - num_intra
+    num_insertions = len(highlightB) - num_intra
+    total = num_intra + num_removals + num_insertions
+    message = (
+        f"{num_intra} intra-line modifications, "
+        f"{num_removals} lines removed, "
+        f"{num_insertions} lines added. "
+        f"{total} line differences in total."
+    )
+    if sbs_settings().get('line_count_popup', False):
+        sublime.message_dialog(message)
+    elif window := view1.window():
+        window.status_message(message)
+
+    if sbs_settings().get('enable_intraline', True):
+        task = partial(colorize_intraline, view1, view2, found_intraline_changes)
+        threading.Thread(target=task).start()
+
+
+def compute_diff(
+    view1_contents: str, view2_contents: str
+) -> tuple[list[str], list[str], list[int], list[int], list[tuple[int, str, str]]]:
+    linesA = deque(view1_contents.splitlines(False))
+    linesB = deque(view2_contents.splitlines(False))
+
+    if sbs_settings().has('ignore_pattern'):
+        ignore_pattern = sbs_settings().get('ignore_pattern')
+        pattern = re.compile(ignore_pattern, re.MULTILINE)
+        view1_contents = pattern.sub('', view1_contents)
+        view2_contents = pattern.sub('', view2_contents)
+
+    if sbs_settings().get('ignore_whitespace', False):
+        view1_contents = re.sub(r'[ \t]', '', view1_contents)
+        view2_contents = re.sub(r'[ \t]', '', view2_contents)
+
+    if sbs_settings().get('ignore_case', False):
+        view1_contents = view1_contents.lower()
+        view2_contents = view2_contents.lower()
+
+    diffLinesA = view1_contents.splitlines(False)
+    diffLinesB = view2_contents.splitlines(False)
+
+    bufferA: list[str] = []
+    bufferB: list[str] = []
+
+    highlightA: list[int] = []
+    highlightB: list[int] = []
+
+    # An "intraline" difference is always a '-' line, possibly followed by
+    # '?' line, and immediately followed by a '+' line; the next line after
+    # that '+' might be another '?' line as well, or not.
+    # In short it is a sequence of one of: "-+", "-?+", "-?+?", "-+?". We
+    # don't want to look forward up to four characters, so we look at it
+    # from the perspective of a "+".  Before a "+" we must have seen a "-"
+    # or a "-?".  That is what we encode in `open_intraline_block`.
+    diff = difflib.ndiff(diffLinesA, diffLinesB, charjunk=None)
+    found_intraline_changes: list[tuple[int, str, str]] = []
+    open_intraline_block = False
+    for prev_line, line, next_line in triplewise(chain([""], diff, [""])):
+        code = line[:1]
+        if code == " ":
+            bufferA.append(linesA.popleft())
+            bufferB.append(linesB.popleft())
+
+        elif code == "-":
+            bufferA.append(linesA.popleft())
+            highlightA.append(len(bufferA) - 1)
+            if next_line.startswith((" ", "-")):
+                bufferB.append("")
+
+        elif code == "+":
+            bufferB.append(linesB.popleft())
+            highlightB.append(len(bufferB) - 1)
+            if open_intraline_block:
+                if highlightB[-1] != highlightA[-1]:
+                    print(f"assertion failed: {highlightB[-1]} != {highlightA[-1]}")
+                found_intraline_changes.append((highlightB[-1], bufferA[-1], bufferB[-1]))
+            else:
+                bufferA.append("")
+
+        elif code == "?":
+            # There is a cheap intra line diff here, but since we filtered
+            # the view contents, we cannot use it.
+            ...
+
+        open_intraline_block = code == "-" or (code == "?" and prev_line.startswith("-"))
+
+    return bufferA, bufferB, highlightA, highlightB, found_intraline_changes
+
+
+def highlight_lines(view, lines, col):
+    # full line diffs
+    regionList = []
+    markers = []
+    for lineNum in lines:
+        lineStart = view.text_point(lineNum, 0)
+        markers.append(lineStart)
+        lineEnd = view.text_point(lineNum + 1, -1)
+        region = sublime.Region(lineStart, lineEnd)
+        regionList.append(region)
+
+    colour = "diff.deleted.sbs-compare"
+    if col == 'B':
+        colour = "diff.inserted.sbs-compare"
+
+    drawType = get_drawtype()
+    view.add_regions('diff_highlighted-' + col, regionList, colour, '', drawType)
+    view.settings().set('sbs_markers', markers)
 
 
 def colorize_intraline(
