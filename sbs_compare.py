@@ -1,7 +1,6 @@
 import os
 import re
 import difflib
-import json
 
 import sublime
 import sublime_plugin
