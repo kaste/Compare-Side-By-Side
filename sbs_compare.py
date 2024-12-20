@@ -295,13 +295,14 @@ class sbs_compare(sublime_plugin.TextCommand):
         view2: sublime.View,
         found_intraline_changes: list[tuple[int, str, str]]
     ):
+        intraline_emptyspace = sbs_settings().get('intraline_emptyspace', False)
         subHighlightA: list[tuple[int, int, int]] = []
         subHighlightB: list[tuple[int, int, int]] = []
         for line_num, left, right in found_intraline_changes:
             s = difflib.SequenceMatcher(None, left, right)
             for tag, i1, i2, j1, j2 in s.get_opcodes():
                 if tag != 'equal':  # == replace
-                    if sbs_settings().get('intraline_emptyspace', False):
+                    if intraline_emptyspace:
                         if tag == 'insert':
                             i2 += j2 - j1
                         if tag == 'delete':
