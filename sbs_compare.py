@@ -101,7 +101,7 @@ class SbsLayoutPreserver(sublime_plugin.EventListener):
 
 
 sbs_markedSelection = ['', '']
-sbs_files = []
+sbs_files: list[str] = []
 
 
 class sbs_mark_sel(sublime_plugin.TextCommand):
@@ -133,10 +133,7 @@ class sbs_compare_files(sublime_plugin.ApplicationCommand):
             print('Compare Error: file(s) not found')
             return
 
-        del sbs_files[:]
-        sbs_files.append(A)
-        sbs_files.append(B)
-
+        sbs_files = [A, B]
         print('Comparing "%s" and "%s"' % (A, B))
 
         window = sublime.active_window()
