@@ -130,7 +130,7 @@ class sbs_compare_files(sublime_plugin.ApplicationCommand):
         A = os.path.abspath(A)
         B = os.path.abspath(B)
         if not os.path.isfile(A) or not os.path.isfile(B):
-            print('Compare Error: file(s) not found')
+            print('Compare Error: file(s) not found: %s, %s' % (A, B))
             return
 
         sbs_files = [A, B]
