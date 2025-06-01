@@ -31,7 +31,7 @@ Usage Options
     Mark a second selection, then right click -> "Compare selections"
   - Create two selections by holding CTRL, then "Compare selections"
   - From the command line: [see README_COMMANDS.md](README_COMMANDS.md)
-  - Jump to next: `alt+n`, jump to previous: `alt+p`
+  - Jump around: `,` or `.`. But also: Jump to next: `alt+n`, jump to previous: `alt+p`
   
 Configuration
 ---

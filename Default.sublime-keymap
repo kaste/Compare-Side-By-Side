@@ -1,5 +1,19 @@
 [
 	{
+		"keys": ["."],
+		"command": "sbs_next_diff",
+		"context": [
+			{ "key": "setting.is_sbs_compare" }
+		]
+	},
+	{
+		"keys": [","],
+		"command": "sbs_prev_diff",
+		"context": [
+			{ "key": "setting.is_sbs_compare" }
+		]
+	},
+	{
 		"keys": ["alt+n"],
 		"command": "sbs_next_diff",
 		"context": [
