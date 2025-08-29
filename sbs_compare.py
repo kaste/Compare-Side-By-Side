@@ -38,9 +38,12 @@ def sbs_settings():
 class sbs_replace_view_contents(sublime_plugin.TextCommand):
     def run(self, edit, text):
         view = self.view
-        view.set_read_only(False)
-        view.replace(edit, sublime.Region(0, view.size()), text)
-        view.set_read_only(True)
+        if view.is_read_only():
+            view.set_read_only(False)
+            view.replace(edit, sublime.Region(0, view.size()), text)
+            view.set_read_only(True)
+        else:
+            view.replace(edit, sublime.Region(0, view.size()), text)
 
 
 class SbsLayoutPreserver(sublime_plugin.EventListener):
