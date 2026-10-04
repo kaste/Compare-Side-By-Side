@@ -13,6 +13,11 @@
         "args": { "compare_selections": true }
     },
     {
+        "caption": "Compare with clipboard",
+        "command": "sbs_compare",
+        "args": { "compare_clipboard": true }
+    },
+    {
         "caption": "Select compared text...",
         "command": "sbs_select_text"
     }
