@@ -164,8 +164,6 @@ class sbs_compare(sublime_plugin.TextCommand):
         compare_selections=False,
         compare_clipboard=False,
     ):
-        if compare_clipboard:
-            return bool(sublime.get_clipboard())
         if compare_selections:
             if len(self.view.sel()) == 2:
                 return all(map(bool, self.view.sel()))
@@ -355,7 +353,11 @@ class sbs_compare(sublime_plugin.TextCommand):
             syntax = active_view.settings().get('syntax')
             create_comparison(selA, selB, syntax, 'selection A', 'selection B')
         elif compare_clipboard is True:
-            clipboard = sublime.get_clipboard().replace('\r\n', '\n').replace('\r', '\n')
+            clipboard = sublime.get_clipboard()
+            if not clipboard:
+                sublime.message_dialog('Clipboard is empty')
+                return
+            clipboard = clipboard.replace('\r\n', '\n').replace('\r', '\n')
             syntax = active_view.settings().get('syntax')
             create_comparison(
                 get_view_contents(active_view), clipboard, syntax, False, 'clipboard'
