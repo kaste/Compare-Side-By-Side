@@ -424,6 +424,7 @@ def compare_views(
     total = num_intra + num_removals + num_insertions
     if total == 0:
         message = "Both views are identical."
+        sublime.message_dialog(message)
     else:
         message = (
             f"{num_intra} intra-line modifications, "
@@ -431,10 +432,10 @@ def compare_views(
             f"{num_insertions} lines added. "
             f"{total} line differences in total."
         )
-    if sbs_settings().get('line_count_popup', False):
-        sublime.message_dialog(message)
-    elif window := view1.window():
-        window.status_message(message)
+        if sbs_settings().get('line_count_popup', False):
+            sublime.message_dialog(message)
+        elif window := view1.window():
+            window.status_message(message)
 
     if sbs_settings().get('enable_intraline', True):
         task = partial(colorize_intraline, view1, view2, found_intraline_changes)
