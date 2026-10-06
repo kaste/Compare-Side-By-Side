@@ -157,7 +157,12 @@ def get_drawtype():
 
 class sbs_compare(sublime_plugin.TextCommand):
     def is_enabled(
-        self, with_active=False, group=-1, index=-1, compare_selections=False
+        self,
+        with_active=False,
+        group=-1,
+        index=-1,
+        compare_selections=False,
+        compare_clipboard=False,
     ):
         if compare_selections:
             if len(self.view.sel()) == 2:
@@ -174,7 +179,13 @@ class sbs_compare(sublime_plugin.TextCommand):
         return True
 
     def run(
-        self, edit, with_active=False, group=-1, index=-1, compare_selections=False
+        self,
+        edit,
+        with_active=False,
+        group=-1,
+        index=-1,
+        compare_selections=False,
+        compare_clipboard=False,
     ):
         global sbs_markedSelection, sbs_files
 
@@ -341,6 +352,15 @@ class sbs_compare(sublime_plugin.TextCommand):
 
             syntax = active_view.settings().get('syntax')
             create_comparison(selA, selB, syntax, 'selection A', 'selection B')
+        elif compare_clipboard is True:
+            clipboard = sublime.get_clipboard()
+            if not clipboard:
+                sublime.message_dialog('Clipboard is empty')
+                return
+            syntax = active_view.settings().get('syntax')
+            create_comparison(
+                get_view_contents(active_view), clipboard, syntax, False, 'clipboard'
+            )
         elif len(openTabs) == 1:
             on_click(0)
         else:

@@ -30,6 +30,8 @@ Usage Options
   - Highlight text, right click -> "Mark selection for comparison"
     Mark a second selection, then right click -> "Compare selections"
   - Create two selections by holding CTRL, then "Compare selections"
+  - Right click in the active view (or use the Command Palette) and select
+    "Compare with clipboard" to compare the whole view with the clipboard contents
   - From the command line: [see README_COMMANDS.md](README_COMMANDS.md)
   - Jump around: `,` or `.`. But also: Jump to next: `alt+n`, jump to previous: `alt+p`
   
