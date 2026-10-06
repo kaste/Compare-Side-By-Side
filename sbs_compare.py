@@ -402,12 +402,15 @@ def compare_views(
     num_removals = len(highlightA) - num_intra
     num_insertions = len(highlightB) - num_intra
     total = num_intra + num_removals + num_insertions
-    message = (
-        f"{num_intra} intra-line modifications, "
-        f"{num_removals} lines removed, "
-        f"{num_insertions} lines added. "
-        f"{total} line differences in total."
-    )
+    if total == 0:
+        message = "Both views are identical."
+    else:
+        message = (
+            f"{num_intra} intra-line modifications, "
+            f"{num_removals} lines removed, "
+            f"{num_insertions} lines added. "
+            f"{total} line differences in total."
+        )
     if sbs_settings().get('line_count_popup', False):
         sublime.message_dialog(message)
     elif window := view1.window():
