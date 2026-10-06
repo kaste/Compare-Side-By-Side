@@ -357,7 +357,6 @@ class sbs_compare(sublime_plugin.TextCommand):
             if not clipboard:
                 sublime.message_dialog('Clipboard is empty')
                 return
-            clipboard = clipboard.replace('\r\n', '\n').replace('\r', '\n')
             syntax = active_view.settings().get('syntax')
             create_comparison(
                 get_view_contents(active_view), clipboard, syntax, False, 'clipboard'
